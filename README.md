@@ -1,1 +1,1 @@
-# Directeaf Study
+# Directed Study
