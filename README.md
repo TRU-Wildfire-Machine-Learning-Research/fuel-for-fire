@@ -12,4 +12,12 @@ Download for the appropriate operating system and follow the installation instru
 
 ### Mac OSX
 
+_TODO_
+
 ### Windows
+
+_TODO_
+
+## Creating Environments
+
+_TODO_
