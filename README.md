@@ -10,6 +10,14 @@ _Note: If you're strapped for storage and prefer something lighter weight, go wi
 
 Download for the appropriate operating system and follow the installation instructions.
 
+Once your download and installation of conda is complete, test to see that the installation was successful.
+
+In your terminal, type `conda env list`
+
+You should see an output for your base environment.
+
+If you aren't familiar with environments, it's recommended that you do some reading: [Soft Introduction to Environments](https://medium.com/@monipip3/virtual-environments-explained-by-a-python-beginner-693a79b195da)[Conda Docs on Environments](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
+
 ### Mac OSX
 
 _TODO_
