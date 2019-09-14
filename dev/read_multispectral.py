@@ -4,7 +4,7 @@
 
 usage:
     python read_multispectral.py sentinel2.bin
-    
+
 tested on Python 2.7.15+ (default, Nov 27 2018, 23:36:35) [GCC 7.3.0] on linux2
 Ubuntu 18.04.2 LTS
 
@@ -48,6 +48,10 @@ if len(sys.argv) < 2:
 
 # check file and header exist
 fn, hdr = sys.argv[1], sys.argv[1][:-4] + '.hdr'
+
+print(fn)
+print(hdr)
+
 if not path.exists(fn):
     err('could not find file: ' + fn)
 if not path.exists(hdr):
@@ -57,7 +61,9 @@ if not path.exists(hdr):
 samples, lines, bands = read_hdr(hdr)
 for f in ['samples', 'lines', 'bands']:
     exec('print("' + f + ' =" + str(' + f + '));')
-
+print(samples)
+print(lines)
+print(bands)
 # read binary IEEE 32-bit float data
 data = np.fromfile(sys.argv[1], '<f4').reshape((bands, lines * samples))
 print("bytes read: " + str(data.size))
