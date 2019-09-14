@@ -7,8 +7,11 @@ import sys
 import numpy as np
 import os.path as path
 import matplotlib.pyplot as plt
+import cv2
+
 
 rawImagePath = "../images/raw/"
+convertImagePath = "../images/converted/"
 image = rawImagePath + "sentinel2"
 binaryImage = image + ".bin"
 headerImage = image + ".hdr"
@@ -47,9 +50,15 @@ def createRGB(data, bands, lines, samples):
     return rgb
 
 
+def writeJPG(data):
+    # need to be able to write the image
+    print(data)
+
+
 def run():
     d, b, l, s = convertBinary()
     rgb = createRGB(d, b, l, s)
+    writeJPG(rgb)
     plt.imshow(rgb)
     plt.tight_layout()
     plt.show()
