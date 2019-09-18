@@ -21,24 +21,24 @@ _Note: If you're strapped for storage and prefer something lighter weight, go wi
 If you aren't familiar with environments, it's recommended that you do some reading: [Soft Introduction to Environments](https://medium.com/@monipip3/virtual-environments-explained-by-a-python-beginner-693a79b195da), [Conda Docs on Environments](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
 
 ### Folder Structure
+
 For some of these scripts to work, you'll need to adhere to a strict folder structure, or risk the scripts failing. Structure follows:
 
-Working Directory
-		|-dev
-		|    |-<scripts>
-		|
-		|-envs
-		|    |-<yaml files for environment setup>
-		|
-		|-images
-		     |-raw
-		     |   |-<raw image files (.bin, .hdr)>
-		     |    
-		     |-converted
-			 |-<images converted from binary (.png, .jpg)>
-		
- 
-		
+Working Directory  
+		 |-dev    
+		 |	|-<scripts>  
+ 		 |
+		 |-envs  
+ 		 |	|-<yaml files for environment setup>  
+ 		 |    
+ 		 |-images  
+ 		 	|-raw  
+ 			| 	|-<raw image files (.bin, .hdr)>  
+ 			|  
+ 			|-converted  
+ 				|-<images converted from binary (.png, .jpg)>  
+
+
 ### Mac OSX
 
 _TODO_
