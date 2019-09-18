@@ -25,7 +25,7 @@ If you aren't familiar with environments, it's recommended that you do some read
 For some of these scripts to work, you'll need to adhere to a strict folder structure, or risk the scripts failing. Structure follows:
 
 Working Directory  
-		 |-dev    
+		 &nbsp;&nbsp;&nbsp;&nbsp;|-dev    
 		 |	|-<scripts>  
  		 |
 		 |-envs  
