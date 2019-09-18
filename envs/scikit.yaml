@@ -8,6 +8,7 @@ dependencies:
   - opencv
   # Package Manager for Python
   - pip
+  - gdal
   # Install the following dependencies with pip
   - pip:
       # Scientific computing packages for Python
