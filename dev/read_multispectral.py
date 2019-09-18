@@ -68,7 +68,7 @@ def writeImage(data):
     timeStr = str(time[0]) + '-' + str(time[1]) + '-' + str(time[2]) + \
         '-' + str(time[3]) + str(time[4]) + str(time[5])
     imagePath = "../images/converted/" + timeStr + ".png"
-    status = cv2.imwrite(imagePath, data)
+    status = cv2.imwrite(imagePath, data*255)
     if status:
         print("Image", str(imagePath), "written")
     else:
