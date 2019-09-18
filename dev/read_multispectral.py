@@ -1,6 +1,6 @@
 """
     @author: breadcrumbbuilds
-    based on read_multispectral.py by @franama
+    based on read_multispectral_cli.py by @franama
 
 """
 import sys
@@ -59,7 +59,7 @@ def showImage(data):
 
 
 """
-    Currently not working, writing all black image
+    Writes a png image to the converted folder
 """
 
 
