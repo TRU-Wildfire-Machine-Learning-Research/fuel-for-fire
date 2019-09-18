@@ -64,16 +64,23 @@ def showImage(data):
 
 
 def writeImage(data):
-    cv2.imwrite("../images/converted/" + str(time) + ".png", data)
+    time = t.localtime()
+    timeStr = str(time[0]) + '-' + str(time[1]) + '-' + str(time[2]) + \
+        '-' + str(time[3]) + str(time[4]) + str(time[5])
+    imagePath = "../images/converted/" + timeStr + ".png"
+    status = cv2.imwrite(imagePath, data*255)
+    if status:
+        print("Image", str(imagePath), "written")
+    else:
+        print("Error, image was not written")
 
 
 def run():
     d, b, l, s = convertBinary()
     rgb = createRGB(d, b, l, s)
-    time = t.time()
 
-    # showImage(rgb)
-    # writeImage(rgb)
+    showImage(rgb)
+    writeImage(rgb)
 
 
 run()
