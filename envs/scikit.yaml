@@ -8,10 +8,12 @@ dependencies:
   - opencv
   # Package Manager for Python
   - pip
+  - gdal
   # Install the following dependencies with pip
   - pip:
       # Scientific computing packages for Python
       - numpy
+      - pillow
       - scipy
       # 2D plotting library
       - matplotlib
@@ -22,7 +24,5 @@ dependencies:
       - scikit-learn
       # Python Data Analysis Library
       - pandas
-      # Python Imaging Library fork
-      - pillow
       # Helper package to go along with the O'Reilly book
       - mglearn
