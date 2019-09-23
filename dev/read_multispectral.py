@@ -63,10 +63,15 @@ def showImage(data):
 """
 
 
-def writeImage(data):
+def uniqueTimeString():
     time = t.localtime()
     timeStr = str(time[0]) + '-' + str(time[1]) + '-' + str(time[2]) + \
         '-' + str(time[3]) + str(time[4]) + str(time[5])
+    return timeStr
+
+
+def writeImage(data):
+    timeStr = uniqueTimeString()
     imagePath = "../images/converted/" + timeStr + ".png"
     status = cv2.imwrite(imagePath, data*255)
     if status:

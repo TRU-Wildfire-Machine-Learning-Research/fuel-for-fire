@@ -6,15 +6,19 @@ import numpy as np
 from osgeo import gdal, gdal_array
 import sys
 import math
+import time
 
 gdal.UseExceptions()
 gdal.AllRegister()
 
 rawImagePath = "../images/raw/"
-imageName = "sentinel2.bin"
-image = rawImagePath + imageName
+imageName = "sentinel2"
+imageExtension = ".bin"
+
+image = rawImagePath + imageName + imageExtension
 
 K = 10
+MAX_K = 20
 
 
 def showImage(filepath):
@@ -45,24 +49,28 @@ def getInputMatrix(image_ds):
 
 def runKMeans(K, X, image):
     print("Running K Means", "\nK =", K)
-    k_means = KMeans(n_clusters=K)
+    k_means = KMeans(n_clusters=K, init='k-means++', n_init=10)
+    print("Fitting K Means")
     k_means.fit(X)
-
+    print("Creating clusters")
     X_cluster = k_means.labels_
     X_cluster = X_cluster.reshape(image[:, :, 0].shape)
     print("Clusters created")
     return X_cluster
 
 
-def createColorMap(cluster, K):
+def createColorMap(X_cluster, K):
     plt.figure(figsize=(20, 20))
     colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 0),
               (0, 1, 1), (0.1, 0.2, 0.5), (0.8, 0.1, 0.3)]
     print("Creating Color Map")
     cm = LinearSegmentedColormap.from_list("Map", colors, N=K)
-    plt.imshow(cluster, cmap=cm)
+    plt.imshow(X_cluster, cmap=cm)
     plt.colorbar()
     plt.show
+    time.sleep(5)
+    print("Saving color map image")
+    plt.imsave(rawImagePath + imageName + "_colorMap.png",  X_cluster, cmap=cm)
 
 
 def elbow_method(image_2d, max_k):
@@ -87,6 +95,7 @@ def run():
     X, img = getInputMatrix(img_ds)
     X_cluster = runKMeans(K, X, img)
     createColorMap(X_cluster, K)
+    print("done")
 
 
 run()
