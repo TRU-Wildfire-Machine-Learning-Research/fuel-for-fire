@@ -12,7 +12,7 @@ gdal.UseExceptions()
 gdal.AllRegister()
 
 rawImagePath = "../images/raw/"
-colorMapImagePath = "../images/colormap"
+colorMapImagePath = "../images/colormap/"
 imageName = "sentinel2"
 imageExtension = ".bin"
 
@@ -24,7 +24,7 @@ MAX_K = 20
 init = 'k-means++'
 n_init = 10
 # number of processors to use (default 1, -1 uses all processors)
-n_jobs = 1
+n_jobs = -1
 
 
 def showImage(filepath):
@@ -56,7 +56,8 @@ def getInputMatrix(image_ds):
 def runKMeans(K, X, image):
     start = time.time()
     print("Running K Means", "\nK =", K)
-    k_means = KMeans(n_clusters=K, init=init, n_init=n_init, n_jobs=n_jobs)
+    k_means = KMeans(n_clusters=K, init=init, n_init=n_init,
+                     n_jobs=n_jobs, verbose=1)
     print("Fitting K Means")
     k_means.fit(X)
     print("Creating clusters")
@@ -78,7 +79,6 @@ def createColorMap(X_cluster, K):
     plt.imshow(X_cluster, cmap=cm)
     plt.colorbar()
     plt.show
-    time.sleep(5)
     print("Saving color map image")
     plt.imsave(colorMapImagePath + imageName +
                "_colorMap.png",  X_cluster, cmap=cm)
