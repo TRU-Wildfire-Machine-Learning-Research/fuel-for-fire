@@ -27,8 +27,14 @@ if __name__ == "__main__":
         print("Must provide a filename")
         sys.exit(0)
 
+    #with the same image create multiple images
+    
+
+
     # Read in raster image
     img_ds = gdal.Open(image, gdal.GA_ReadOnly)
+
+
 
     # allocate memory to reshape image
     img = np.zeros((img_ds.RasterYSize,  # number of rows
@@ -41,15 +47,23 @@ if __name__ == "__main__":
         print("reading band", b + 1, "of", img.shape[2])
         img[:, :, b] = img_ds.GetRasterBand(b + 1).ReadAsArray()
 
+    #Printing the shape of the image
+    print(img.shape[0]*img.shape[1])
+    print('Image Raster Count: ', img.shape[2])
+
+
+    #Downsampling the image before reshaping
+   #img = img[::2, ::2] + img[1::2, ::2] + img[::2, 1::2] + img[1::2, 1::2]
+
     # reshape image again to match expected format for scikit-learn
     new_shape = (img.shape[0] * img.shape[1], img.shape[2])
     X = img[:, :, :img.shape[2]].reshape(new_shape)
-    # print "X.shape", X.shape
+    print (X.shape)
 
     # set parameters for clustering
     n_clusters_desired = 7 # need to experiment with this
     print('Going to run the heirarchical clustering')
-    hierarchical_clustering = AgglomerativeClustering(n_clusters = n_clusters_desired)
+    hierarchical_clustering = AgglomerativeClustering(n_clusters = n_clusters_desired, linkage='ward')
 
     # do the clustering
     hierarchical_clustering.fit(X)
