@@ -12,13 +12,19 @@ gdal.UseExceptions()
 gdal.AllRegister()
 
 rawImagePath = "../images/raw/"
+colorMapImagePath = "../images/colormap"
 imageName = "sentinel2"
 imageExtension = ".bin"
 
 image = rawImagePath + imageName + imageExtension
 
+# Params
 K = 10
 MAX_K = 20
+init = 'k-means++'
+n_init = 10
+# number of processors to use (default 1, -1 uses all processors)
+n_jobs = 1
 
 
 def showImage(filepath):
@@ -48,14 +54,18 @@ def getInputMatrix(image_ds):
 
 
 def runKMeans(K, X, image):
+    start = time.time()
     print("Running K Means", "\nK =", K)
-    k_means = KMeans(n_clusters=K, init='k-means++', n_init=10)
+    k_means = KMeans(n_clusters=K, init=init, n_init=n_init, n_jobs=n_jobs)
     print("Fitting K Means")
     k_means.fit(X)
     print("Creating clusters")
     X_cluster = k_means.labels_
     X_cluster = X_cluster.reshape(image[:, :, 0].shape)
     print("Clusters created")
+    stop = time.time()
+    totalProcessTime = stop - start
+    print("Time: " + str(totalProcessTime))
     return X_cluster
 
 
@@ -70,7 +80,8 @@ def createColorMap(X_cluster, K):
     plt.show
     time.sleep(5)
     print("Saving color map image")
-    plt.imsave(rawImagePath + imageName + "_colorMap.png",  X_cluster, cmap=cm)
+    plt.imsave(colorMapImagePath + imageName +
+               "_colorMap.png",  X_cluster, cmap=cm)
 
 
 def elbow_method(image_2d, max_k):
