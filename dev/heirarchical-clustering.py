@@ -9,14 +9,127 @@ import numpy as np
 import matplotlib.pyplot as plt
 from osgeo import gdal, gdal_array
 from matplotlib.colors import LinearSegmentedColormap
-from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
 from sklearn.feature_extraction.image import grid_to_graph
+import cv2
 
 # Tell GDAL to throw Python exceptions, and register all drivers
 gdal.UseExceptions()
 gdal.AllRegister()
 
+
+'''
+Function Description: Running heirarchical Clustering on the image
+
+'''
+def hierarchical_clustering(image, img):
+
+    print('Starting executing the heirarchical clustering')
+    
+      # set parameters for clustering
+    n_clusters_desired = 7 # need to experiment with this
+    print('Going to run the heirarchical clustering')
+    hierarchical_clustering = AgglomerativeClustering(n_clusters = n_clusters_desired, linkage='ward')
+
+    # do the clustering
+    hierarchical_clustering.fit(image)
+
+    # extract cluster labels and reshape for plotting
+    X_cluster = hierarchical_clustering.labels_
+    X_cluster = X_cluster.reshape(img[:, :, 0].shape)
+
+    plt.figure(figsize=(20, 20))
+    #colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 0), (0, 1, 1), (0.1, 0.2, 0.5), (0.8, 0.1, 0.3)]
+    # Create the colormap
+    #cm = LinearSegmentedColormap.from_list("my map", colors, N=10)
+    plt.imshow(X_cluster) #, cmap=cm)
+    plt.colorbar()
+    plt.show()
+
+
+
+'''
+Function Description: Running the DBSCAN
+'''
+def dbscan_clustering(image, img):
+    
+    dbscan_clustering = DBSCAN(eps=0.5, min_samples=10, algorithm= 'ball_tree')
+
+    dbscan_clustering.fit(image)
+
+    X_cluster = dbscan_clustering.labels_
+    X_cluster = X_cluster.reshape(img[:, :, 0].shape)
+
+    plt.figure(figsize=(20, 20))
+    #colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 0), (0, 1, 1), (0.1, 0.2, 0.5), (0.8, 0.1, 0.3)]
+    # Create the colormap
+    #cm = LinearSegmentedColormap.from_list("my map", colors, N=10)
+    plt.imshow(X_cluster) #, cmap=cm)
+    plt.colorbar()
+    plt.show()
+
+
+
+
+'''
+Function Description: Splitting the main image
+'''
+def image_splitter(image, number):
+    
+    print('Starting the image splitting')
+    #showing the original image
+    img=cv2.imread(image)
+    cv2.imshow('output', img)
+    #cv2.waitKey(0)
+
+    #Getting the size of the image
+    img_height = img.shape[0]
+    img_width = img.shape[1]
+
+
+    #cropping down the image
+    crop_img = img[0:100, 0:100]
+
+    #informative
+    print('Number of rows in the cropped image: ',crop_img.shape[0])
+    print('Numebr of columns in the cropped image: ', crop_img.shape[1])
+    print('Number of bands in the cropped image: ', crop_img.shape[2])
+
+
+    #initialize an empty numpy array of cropped image size
+    np_crop_img =  np.zeros((crop_img.shape[0],  # number of rows
+                    crop_img.shape[1],  # number of cols
+                    crop_img.shape[2])  # number of bands
+                    )
+
+
+    for b in range(crop_img.shape[2]):
+        np_crop_img[:,:,b] = crop_img[:,:,b]   
+
+    #convert the image to single to numpy array
+    new_crop_img_shape = (np_crop_img.shape[0]*np_crop_img.shape[1], np_crop_img.shape[2])
+    crop_img_X = np_crop_img[:,:,:np_crop_img.shape[2]].reshape(new_crop_img_shape)
+    print(crop_img_X.shape)
+
+    #Runninng hierarchical clustering on the cropped image
+    hierarchical_clustering(crop_img_X, crop_img)
+
+
+    cv2.imshow("its cropped",crop_img)
+    cv2.waitKey(0)
+
+
+
+
+
+
+'''
+Function Description: Main Function
+'''
+
 if __name__ == "__main__":
+    
+
 
     # parse command line arg
     try:
@@ -60,68 +173,12 @@ if __name__ == "__main__":
     X = img[:, :, :img.shape[2]].reshape(new_shape)
     print (X.shape)
 
-    # set parameters for clustering
-    n_clusters_desired = 7 # need to experiment with this
-    print('Going to run the heirarchical clustering')
-    hierarchical_clustering = AgglomerativeClustering(n_clusters = n_clusters_desired, linkage='ward')
+    #running the hierarchical clustering
+    #hierarchical_clustering(X, img)
 
-    # do the clustering
-    hierarchical_clustering.fit(X)
+    #runnig the DBSCAN
+    #dbscan_clustering(X, img)
 
-    # extract cluster labels and reshape for plotting
-    X_cluster = hierarchical_clustering.labels_
-    X_cluster = X_cluster.reshape(img[:, :, 0].shape)
+    #running image splitting
+    image_splitter(image, 5)
 
-    plt.figure(figsize=(20, 20))
-    #colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 0), (0, 1, 1), (0.1, 0.2, 0.5), (0.8, 0.1, 0.3)]
-    # Create the colormap
-    #cm = LinearSegmentedColormap.from_list("my map", colors, N=10)
-    plt.imshow(X_cluster) #, cmap=cm)
-    plt.colorbar()
-    plt.show()
-
-"""
-Run hierarchical clustering
-"""
-'''
-def run_hierarchical_clustering(filepath, k):
-    img = get_image_2d(filepath)
-    img = img.astype(np.int32)
-    img = img[::2, ::2] + img[1::2, ::2] + img[::2, 1::2] + img[1::2, 1::2]
-    X = np.reshape(img, (-1, 1))
-    # Define the structure A of the data. Pixels connected to their neighbors.
-    #connectivity = grid_to_graph(*img.shape)
-    # Compute clustering
-    print("Compute structured hierarchical clustering...")
-    st = time.time()
-    n_clusters = k
-    ward = AgglomerativeClustering(n_clusters=n_clusters,
-            linkage='ward',
-            #connectivity=connectivity
-            ).fit(X)
-    label = np.reshape(ward.labels_, img.shape)
-    print("Elapsed time: ", time.time() - st)
-    print("Number of pixels: ", label.size)
-    print("Number of clusters: ", np.unique(label).size)
-    ###############################################################################
-    # Plot the results on an image
-    plt.figure(figsize=(5, 5))
-    plt.imshow(img, cmap=plt.cm.gray)
-    for l in range(n_clusters):
-        plt.contour(label == l, contours=1,
-                    colors=[plt.cm.get_cmap("Spectral")(l / float(n_clusters)), ])
-    plt.xticks(())
-    plt.yticks(())
-    plt.show()
-'''
-
-""""
-Reshapes provided image to 2D
-"""
-'''
-def get_image_2d(filepath):
-    image = imageio.imread(filepath)
-    x, y, z = image.shape
-    image_2d = image.reshape(x*y, z)
-    return image_2d
-'''
