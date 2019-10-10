@@ -24,6 +24,4 @@ dependencies:
       - scikit-learn
       # Python Data Analysis Library
       - pandas
-      # Helper package to go along with the O'Reilly book
-      - mglearn
       - rasterio
