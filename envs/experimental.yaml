@@ -1,4 +1,4 @@
-name: readraster
+name: exp
 dependencies:
   # Current release of Python to work with
   - python=3.6
@@ -25,3 +25,4 @@ dependencies:
       # Python Data Analysis Library
       - pandas
       - rasterio
+      - plotly
