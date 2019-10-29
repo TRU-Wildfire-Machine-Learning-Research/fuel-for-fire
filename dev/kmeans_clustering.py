@@ -1,71 +1,87 @@
-"""
-    @author: franarama
-
-"""
-
-
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-import imageio
+import cv2
 from sklearn.cluster import KMeans
 import numpy as np
 from osgeo import gdal, gdal_array
 import sys
 import math
+import time
 
-# Tell GDAL to throw Python exceptions, and register all drivers
 gdal.UseExceptions()
 gdal.AllRegister()
 
+rawImagePath = "../images/raw/"
+colorMapImagePath = "../images/colormap/"
+imageName = "sentinel2"
+imageExtension = ".bin"
 
-"""
-Displays provided satellite image
-"""
+image = rawImagePath + imageName + imageExtension
+
+# Params
+K = 10
+MAX_K = 20
+init = 'k-means++'
+n_init = 10
+# number of processors to use (default 1, -1 uses all processors)
+n_jobs = -1
 
 
-def show_image(filepath):
-    image = imageio.imread(filepath)
-    plt.imshow(image)
+def showImage(filepath):
+    image = cv2.imread(filepath)
+    plt.show(image)
     plt.show()
 
 
-"""
-Runs the k-means algorithm on a provided image
-"""
+def readRasterImage(image):
+    print("Reading Raster Image")
+    image_ds = gdal.Open(image, gdal.GA_ReadOnly)
+    return image_ds
 
 
-def run_kmeans(filepath, k):
-    image = imageio.imread(filepath)
-    x, y, z = image.shape
-    image_2d = get_image_2d(filepath)
+def getInputMatrix(image_ds):
+    image = np.zeros((image_ds.RasterYSize, image_ds.RasterXSize, image_ds.RasterCount),
+                     gdal_array.GDALTypeCodeToNumericTypeCode(image_ds.GetRasterBand(1).DataType))
+    print("Creating input matrix")
+    for band in range(image.shape[2]):
+        image[:, :, band] = image_ds.GetRasterBand(band + 1).ReadAsArray()
 
-    kmeans_cluster = KMeans(random_state=0, n_clusters=k)
-    kmeans_cluster.fit(image_2d)
-    cluster_centers = kmeans_cluster.cluster_centers_
-    cluster_labels = kmeans_cluster.labels_
+    new_shape = (image.shape[0] * image.shape[1], image.shape[2])
+    print("New Shape:", new_shape)
+    X = image[:, :, :13].reshape(new_shape)
 
-    # plt.imshow(cluster_centers[cluster_labels].reshape(x, y, z).astype(np.uint8))
-    # plt.show()
-
-    return cluster_labels, cluster_centers
+    return X, image
 
 
-"""
-Reshapes provided image to 2D
-"""
+def runKMeans(K, X, image):
+    start = time.time()
+    print("Running K Means", "\nK =", K)
+    k_means = KMeans(n_clusters=K, init=init, n_init=n_init,
+                     n_jobs=n_jobs, verbose=1)
+    print("Fitting K Means")
+    k_means.fit(X)
+    print("Creating clusters")
+    X_cluster = k_means.labels_
+    X_cluster = X_cluster.reshape(image[:, :, 0].shape)
+    print("Clusters created")
+    stop = time.time()
+    totalProcessTime = stop - start
+    print("Time: " + str(totalProcessTime))
+    return X_cluster
 
 
-def get_image_2d(filepath):
-    image = imageio.imread(filepath)
-    x, y, z = image.shape
-    image_2d = image.reshape(x*y, z)
-    return image_2d
-
-
-"""
-Plots number of clusters vs. within cluster sum of squares
-(which we aim to minimize)
-"""
+def createColorMap(X_cluster, K):
+    plt.figure(figsize=(20, 20))
+    colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 0),
+              (0, 1, 1), (0.1, 0.2, 0.5), (0.8, 0.1, 0.3)]
+    print("Creating Color Map")
+    cm = LinearSegmentedColormap.from_list("Map", colors, N=K)
+    plt.imshow(X_cluster, cmap=cm)
+    plt.colorbar()
+    plt.show
+    print("Saving color map image")
+    plt.imsave(colorMapImagePath + imageName +
+               "_colorMap.png",  X_cluster, cmap=cm)
 
 
 def elbow_method(image_2d, max_k):
@@ -85,51 +101,12 @@ def elbow_method(image_2d, max_k):
     plt.show()
 
 
-if __name__ == "__main__":
+def run():
+    img_ds = readRasterImage(image)
+    X, img = getInputMatrix(img_ds)
+    X_cluster = runKMeans(K, X, img)
+    createColorMap(X_cluster, K)
+    print("done")
 
-    # parse command line arg
-    try:
-        image = sys.argv[1]
 
-    # catch no file given
-    except IndexError:
-        print("Must provide a filename")
-        sys.exit(0)
-
-    # show_image(image)
-    # number of clusters
-    K = 10
-    # labels, centroids = run_kmeans(image, K)
-
-    # max number of clusters to plot with elbow method
-    MAX_K = 20
-
-    # image_2d = get_image_2d(image)
-    # elbow_method(image_2d, (MAX_K + 1))
-
-    # Read in raster image
-    img_ds = gdal.Open(image, gdal.GA_ReadOnly)
-    img = np.zeros((img_ds.RasterYSize, img_ds.RasterXSize, img_ds.RasterCount),
-                   gdal_array.GDALTypeCodeToNumericTypeCode(img_ds.GetRasterBand(1).DataType))
-
-    for b in range(img.shape[2]):
-        img[:, :, b] = img_ds.GetRasterBand(b + 1).ReadAsArray()
-
-    new_shape = (img.shape[0] * img.shape[1], img.shape[2])
-    X = img[:, :, :13].reshape(new_shape)
-
-    k_means = KMeans(n_clusters=K)
-    k_means.fit(X)
-
-    X_cluster = k_means.labels_
-    X_cluster = X_cluster.reshape(img[:, :, 0].shape)
-
-    plt.figure(figsize=(20, 20))
-    colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 0),
-              (0, 1, 1), (0.1, 0.2, 0.5), (0.8, 0.1, 0.3)]
-    # Create the colormap
-    cm = LinearSegmentedColormap.from_list(
-        "my map", colors, N=10)
-    plt.imshow(X_cluster, cmap=cm)
-    plt.colorbar()
-    plt.show()
+run()

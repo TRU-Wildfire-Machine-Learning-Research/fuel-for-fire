@@ -1,6 +1,6 @@
 """
     @author: breadcrumbbuilds
-    based on read_multispectral.py by @franama
+    based on read_multispectral_cli.py by @franama
 
 """
 import sys
@@ -59,14 +59,19 @@ def showImage(data):
 
 
 """
-    Currently not working, writing all black image
+    Writes a png image to the converted folder
 """
 
 
-def writeImage(data):
+def uniqueTimeString():
     time = t.localtime()
     timeStr = str(time[0]) + '-' + str(time[1]) + '-' + str(time[2]) + \
         '-' + str(time[3]) + str(time[4]) + str(time[5])
+    return timeStr
+
+
+def writeImage(data):
+    timeStr = uniqueTimeString()
     imagePath = "../images/converted/" + timeStr + ".png"
     status = cv2.imwrite(imagePath, data*255)
     if status:
