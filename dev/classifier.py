@@ -165,7 +165,7 @@ def train(X, y):
 
     sgd_classifier = SGDClassifier(random_state=42, verbose=1, warm_start=True)
 
-    print("Begin Fitting\n")
+    print("\n\nBegin Fitting\n")
     y_pred = sgd_classifier.fit(X_train, y_train).predict(X_test)
 
     print("\n{:*^30}\n".format("Training complete"))
