@@ -4,7 +4,6 @@ import os
 import rasterio
 import pandas as pd
 import numpy as np
-
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
@@ -12,15 +11,18 @@ from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import SGDClassifier
-
-"""
-This function taken from
-https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
-"""
-
-"""
-getData returns a list of the file names in the data folder.
-"""
+from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.model_selection import StratifiedKFold
+from sklearn.base import clone
+from sklearn.pipeline import Pipeline
 
 
 def getData(fp):
@@ -34,11 +36,6 @@ def getData(fp):
 
     print("files retrieved")
     return rasterBin
-
-
-"""
-Fill the data frame with data
-"""
 
 
 def populateDataFrame(rasterBin):
@@ -111,8 +108,8 @@ def buildTrainingSet(X_true, X_false, class_):
 
 
 def normalizeData(X):
-    scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
-    X_norm = scaler.fit_transform(X)
+    X_norm = StandardScaler(copy=True, with_mean=True,
+                            with_std=True).fit_transform(X)
 
     return X_norm
 
@@ -126,13 +123,7 @@ def oversample(X, X_false):
     return X_true_oversample
 
 
-"""
-Undersample the data (take a subset of false pixels
-the same size as the true pixels)
-"""
-
-
-def getSample(data_frame, classes, undersample, normalize):
+def getSample(data_frame, classes, undersample=True, normalize=True):
 
     # If we are combining classes
     class_dict = {"water": "label_water_bool",
@@ -140,7 +131,7 @@ def getSample(data_frame, classes, undersample, normalize):
                   "shrub": "label_shrub_bool",
                   "broadleaf": "label_broadleaf_bool"}
     if len(classes) > 1:
-        print("OK")
+        print("Program does not support multiple class unions")
         # TO DO
     else:
         class_ = class_dict[classes[0].lower()]
@@ -148,20 +139,16 @@ def getSample(data_frame, classes, undersample, normalize):
     X_true = data_frame[data_frame[class_] == True]
 
     if undersample:
-
-        # Get the same number of false samples as true samples
-        # ie (balance the classes)
         X_false = data_frame[data_frame[class_]
                              == False].sample(len(X_true))
 
         X, y = buildTrainingSet(X_true, X_false, class_)
 
-        # Normalize the data
         if normalize:
             return normalizeData(X), y
         else:
             return X, y
-    else:
+    else:  # oversampling
         X_false = data_frame[data_frame[class_]
                              == False]
 
@@ -180,37 +167,54 @@ def outputClassifierMetrics(y_test, y_pred):
     truenegative, falsepositive, falsenegative, truepositive = confusion_matrix(
         y_test, y_pred).ravel()
     print("Confusion Matrix\n")
-
     for arr in cm:
         print(arr)
-
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     print("")
     for arr in cm:
         print(arr)
-
-    print("\nTrue Negative", truenegative)
-    print("True Positive", truepositive)
-    print("False Negative", falsenegative)
-    print("False Positive", falsepositive)
+    print("\nTrue Negative", truenegative)  # land guessed correctly
+    print("True Positive", truepositive)  # water guessed correctly
+    print("False Negative", falsenegative)  # Land guessed as water
+    print("False Positive", falsepositive)  # Water guessed as land
 
 
 def train(X, y):
+
+    # skfolds = StratifiedKFold(n_splits=3, random_state=42)
+    sgd_classifier = SGDClassifier(
+        random_state=42, verbose=True)
+
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=0, test_size=0.2)
 
-    sgd_classifier = SGDClassifier(random_state=42, verbose=1, warm_start=True)
+    np.set_printoptions(precision=3)
 
-    print("\n\nBegin Fitting\n")
+    print("\n\nBegin Fitting SGD\n")
 
-    y_pred = sgd_classifier.fit(X_train, y_train).predict(X_test)
+    y_pred_sgd = sgd_classifier.fit(X_train, y_train).predict(X_test)
 
     print("\n{:*^30}\n".format("Training complete"))
     print("Test score: {:.3f}".format(sgd_classifier.score(X_test, y_test)))
+    outputClassifierMetrics(y_test, y_pred_sgd)
 
-    np.set_printoptions(precision=3)
 
-    outputClassifierMetrics(y_test, y_pred)
+"""
+    for train_index, test_index in skfolds.split(X_train, y_train):
+
+        clone_clf = clone(sgd_classifier)
+
+        X_train_folds = X_train[train_index]
+        y_train_folds = (y_train[train_index])
+        X_test_fold = X_train[test_index]
+        y_test_fold = (y_train[test_index])
+        print(X_test_fold)
+        # clone_clf.fit(X_train_folds, y_train_folds)
+        # y_pred = clone_clf.predict(X_test_fold)
+
+        # n_correct = sum(y_pred == y_test_fold)
+        # print(n_correct / len(y_pred))  # prints 0.9502, 0.96565 and 0.96495
+"""
 
 
 """
@@ -234,12 +238,27 @@ def train(X, y):
 if __name__ == "__main__":
 
     data_frame = populateDataFrame(getData("../data/"))
-    # print(data_frame.label_shrub_val)
 
+    print("\n\n{:-^50}".format("WATER"))
     X_us, y_us = getSample(
-        data_frame, ['water'], undersample=True, normalize=True)
+        data_frame, ['water'])
     X_os, y_os = getSample(
-        data_frame, ['water'], undersample=False, normalize=True)
-
+        data_frame, ['water'], undersample=False)
     train(X_us, y_us)
     train(X_os, y_os)
+"""
+    print("\n\n{:-^50}".format("RIVER"))
+    X_us, y_us = getSample(
+        data_frame, ['river'])
+    X_os, y_os = getSample(
+        data_frame, ['river'], undersample=False)
+    train(X_us, y_us)
+    train(X_os, y_os)
+"""
+print("\n\n{:-^50}".format("BROADLEAF"))
+X_us, y_us = getSample(
+    data_frame, ['broadleaf'])
+X_os, y_os = getSample(
+    data_frame, ['broadleaf'], undersample=False)
+train(X_us, y_us)
+train(X_os, y_os)
