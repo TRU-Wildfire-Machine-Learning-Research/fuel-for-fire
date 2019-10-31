@@ -52,16 +52,24 @@ def populateDataFrame(rasterBin):
         'water_vapour',
         'swir_cirrus',
         'swir2',
-        'label_water_val',
-        'label_water_bool',
-        'label_river_val',
-        'label_river_bool',
-        'label_broadleaf_val',
-        'label_broadleaf_bool',
-        'label_shrub_val',
-        'label_shrub_bool',
-        'label_mixed_val',
-        'label_mixed_bool'))
+        'water_val',
+        'water_bool',
+        'river_val',
+        'river_bool',
+        'broadleaf_val',
+        'broadleaf_bool',
+        'shrub_val',
+        'shrub_bool',
+        'mixed_val',
+        'mixed_bool',
+        'conifer_val',
+        'conifer_bool',
+        'herb_val',
+        'herb_bool',
+        'cutblock_val',
+        'cutblock_bool',
+        'exposed_val',
+        'exposed_bool'))
 
     for raster in rasterBin:
 
@@ -77,27 +85,45 @@ def populateDataFrame(rasterBin):
 
         elif "WATERSP.tif_project_4x.bin_sub.bin" in raster:
             water = rasterio.open(raster).read(1)
-            data_frame['label_water_val'] = water.ravel()
-            data_frame['label_water_bool'] = data_frame['label_water_val'] != 128
+            data_frame['water_val'] = water.ravel()
+            data_frame['water_bool'] = data_frame['water_val'] != 128
 
         elif "RiversSP.tif_project_4x.bin_sub.bin" in raster:
             river = rasterio.open(raster).read(1)
-            data_frame['label_river_val'] = river.ravel()
-            data_frame['label_river_bool'] = data_frame['label_river_val'] == 1.0
+            data_frame['river_val'] = river.ravel()
+            data_frame['river_bool'] = data_frame['river_val'] == 1.0
 
         elif "BROADLEAF_SP.tif_project_4x.bin_sub.bin" in raster:
             broadleaf = rasterio.open(raster).read(1)
-            data_frame['label_broadleaf_val'] = broadleaf.ravel()
-            data_frame['label_broadleaf_bool'] = data_frame['label_broadleaf_val'] == 1.0
+            data_frame['broadleaf_val'] = broadleaf.ravel()
+            data_frame['broadleaf_bool'] = data_frame['broadleaf_val'] == 1.0
+
+    # All need to be decoded to a boolean value from here on
 
         elif "SHRUB_SP.tif_project_4x.bin_sub.bin" in raster:
             shrub = rasterio.open(raster).read(1)
-            data_frame['label_shrub_val'] = shrub.ravel()
-            # yet to decode the shrub values boolean correspondance
+            data_frame['shrub_val'] = shrub.ravel()
+
         elif "MIXED_SP.tif_project_4x.bin_sub.bin" in raster:
             mixed = rasterio.open(raster).read(1)
-            data_frame['label_mixed_val'] = mixed.ravel()
+            data_frame['mixed_val'] = mixed.ravel()
             # yet to decode mixed
+
+        elif "CONIFER_SP.tif_project_4x.bin_sub.bin" in raster:
+            conifer = rasterio.open(raster).read(1)
+            data_frame['conifer_val'] = conifer.ravel()
+
+        elif "HERB_GRAS_SP.tif_project_4x.bin_sub.bin" in raster:
+            herb = rasterio.open(raster).read(1)
+            data_frame['herb_val'] = herb.ravel()
+
+        elif "CCUTBL_SP.tif_project_4x.bin_sub.bin" in raster:
+            cutblock = rasterio.open(raster).read(1)
+            data_frame['cutblock_val'] = cutblock.ravel()
+
+        elif "EXPOSED_SP.tif_project_4x.bin_sub.bin" in raster:
+            exposed = rasterio.open(raster).read(1)
+            data_frame['exposed_val'] = exposed.ravel()
 
     return data_frame
 
@@ -132,10 +158,10 @@ def oversample(X, X_false):
 def getSample(data_frame, classes, undersample=True, normalize=True):
 
     # If we are combining classes
-    class_dict = {"water": "label_water_bool",
-                  "river": "label_river_bool",
-                  "shrub": "label_shrub_bool",
-                  "broadleaf": "label_broadleaf_bool"}
+    class_dict = {"water": "water_bool",
+                  "river": "river_bool",
+                  "shrub": "shrub_bool",
+                  "broadleaf": "broadleaf_bool"}
     if len(classes) > 1:
         print("Program does not support multiple class unions")
         # TO DO
@@ -226,27 +252,32 @@ def train(X, y):
 """
         LIST OF THE AVAILABLE DATA
 
-    # vri_s2_objid2.tif_project_4x.bin_sub.bin
-    # S2A.bin_4x.bin_sub.bin
-    # BROADLEAF_SP.tif_project_4x.bin_sub.bin
-    # WATERSP.tif_project_4x.bin_sub.bin
+    ### vri_s2_objid2.tif_project_4x.bin_sub.bin
+    ### S2A.bin_4x.bin_sub.bin
+    ### BROADLEAF_SP.tif_project_4x.bin_sub.bin
+    ### WATERSP.tif_project_4x.bin_sub.bin
     # MIXED_SP.tif_project_4x.bin_sub.bin
     # SHRUB_SP.tif_project_4x.bin_sub.bin
-    # vri_s3_objid2.tif_project_4x.bin_sub.bin
-    # RiversSP.tif_project_4x.bin_sub.bin
+    ## vri_s3_objid2.tif_project_4x.bin_sub.bin
+    ## RiversSP.tif_project_4x.bin_sub.bin
     # L8.bin_4x.bin_sub.bin
-    # CONIFER_SP.tif_project_4x.bin_sub.bin
-    # HERB_GRAS_SP.tif_project_4x.bin_sub.bin
-    # CCUTBL_SP.tif_project_4x.bin_sub.bin
-    # EXPOSED_SP.tif_project_4x.bin_sub.bin
+    ## CONIFER_SP.tif_project_4x.bin_sub.bin
+    ## HERB_GRAS_SP.tif_project_4x.bin_sub.bin
+    ## CCUTBL_SP.tif_project_4x.bin_sub.bin
+    ## EXPOSED_SP.tif_project_4x.bin_sub.bin
 """
 
 if __name__ == "__main__":
 
     data_frame = populateDataFrame(getData("../data/"))
-    unqShrubVals = data_frame['label_shrub_val'].unique()
-    # print(len(unqShrubVals))
 
+    print(len(data_frame['shrub_val'].unique()))
+    print(len(data_frame['mixed_val'].unique()))
+    print(len(data_frame['conifer_val'].unique()))
+    print(len(data_frame['herb_val'].unique()))
+    print(len(data_frame['cutblock_val'].unique()))
+    print(len(data_frame['exposed_val'].unique()))
+"""
     print("\n\n{:-^50}".format("WATER"))
     X_us, y_us = getSample(
         data_frame, ['water'])
@@ -270,3 +301,4 @@ if __name__ == "__main__":
         data_frame, ['broadleaf'], undersample=False)
     train(X_us, y_us)
     train(X_os, y_os)
+"""
