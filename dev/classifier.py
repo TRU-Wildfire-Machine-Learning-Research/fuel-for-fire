@@ -146,6 +146,23 @@ def getSample(data_frame, undersample, normalize):
             return X, y
 
 
+def outputClassifierMetrics(y_test, y_pred):
+    cm = confusion_matrix(y_test, y_pred)
+    truenegative, falsepositive, falsenegative, truepositive = confusion_matrix(
+        y_test, y_pred).ravel()
+
+    for arr in cm:
+        print(arr)
+    print("Confusion Matrix\n", cm)
+    print("\nTrue Negative", truenegative)  # land guessed correctly
+    print("True Positive", truepositive)  # water guessed correctly
+    print("False Negative", falsenegative)  # Land guessed as water
+    print("False Positive", falsepositive)  # Water guessed as land
+    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    print("\nConfusion Matrix Percentages\n", cm)
+
+
 def train(X, y):
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=0, test_size=0.2)
