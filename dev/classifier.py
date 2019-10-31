@@ -117,7 +117,7 @@ def normalizeData(X):
     return X_norm
 
 
-def oversample(X):
+def oversample(X, X_false):
     X_true_oversample = X.copy()
 
     while len(X_true_oversample) < len(X_false):
@@ -145,8 +145,6 @@ def getSample(data_frame, classes, undersample, normalize):
     else:
         class_ = class_dict[classes[0].lower()]
 
-    print(class_dict)
-
     X_true = data_frame[data_frame[class_] == True]
 
     if undersample:
@@ -160,23 +158,19 @@ def getSample(data_frame, classes, undersample, normalize):
 
         # Normalize the data
         if normalize:
-            X_norm = normalizeData(X)
-
-            return X_norm, y
+            return normalizeData(X), y
         else:
             return X, y
     else:
         X_false = data_frame[data_frame[class_]
                              == False]
 
-        X_oversample = oversample(X_true)
+        X_oversample = oversample(X_true, X_false)
 
         X, y = buildTrainingSet(X_oversample, X_false, class_)
 
         if normalize:
-            X_norm = normalizeData(X)
-
-            return X_norm, y
+            return normalizeData(X), y
         else:
             return X, y
 
@@ -241,7 +235,8 @@ if __name__ == "__main__":
 
     X_us, y_us = getSample(
         data_frame, ['water'], undersample=True, normalize=True)
-    # X_os, y_os = getSample(data_frame, undersample=False, normalize=True)
+    X_os, y_os = getSample(
+        data_frame, ['water'], undersample=False, normalize=True)
 
     train(X_us, y_us)
-    # train(X_os, y_os)
+    train(X_os, y_os)
