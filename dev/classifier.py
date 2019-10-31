@@ -116,15 +116,8 @@ def getSample(data_frame, undersample, normalize):
         X_false = data_frame[data_frame['label_water_bool']
                              == False].sample(len(X_true))
 
-        undersample_frames = [X_true, X_false]
+        X, y = buildTrainingSet(X_true, X_false)
 
-        # Concat the undersampled true and false pixels
-        X_full = pd.concat(undersample_frames)
-        X = X_full.loc[:, : 'swir2']  # only considers the columns up to swir2
-        y = X_full['label_water_bool']
-
-        print("\n\nUndersampled Classes\nTrue Samples: ", len(
-            X_true), "\nFalse Samples: ", len(X_false), "Total Length:", len(X))
         # Normalize the data
         if normalize:
             scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
@@ -142,14 +135,8 @@ def getSample(data_frame, undersample, normalize):
             os_l = [X_true_oversample, X_true]
             X_true_oversample = pd.concat(os_l)
 
-        os_list = [X_true_oversample, X_false]
-        X_full = pd.concat(os_list)
+        X, y = buildTrainingSet(X_true_oversample, X_false)
 
-        X = X_full.loc[:, : 'swir2']  # only considers the columns up to swir2
-        y = X_full['label_water_bool']
-
-        print("\n\nOversampled Classes\nTrue Samples: ", len(X_true_oversample), str(len(X_true_oversample)/len(X)) + "%",
-              "\nFalse Samples: ", len(X_false),  str(len(X_false)/len(X)) + "%",  "\nTotal Length", len(X))
         if normalize:
             scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
             X_norm = scaler.fit_transform(X)
