@@ -246,7 +246,7 @@ if __name__ == "__main__":
         data_frame, ['water'], undersample=False)
     train(X_us, y_us)
     train(X_os, y_os)
-"""
+
     print("\n\n{:-^50}".format("RIVER"))
     X_us, y_us = getSample(
         data_frame, ['river'])
@@ -254,11 +254,11 @@ if __name__ == "__main__":
         data_frame, ['river'], undersample=False)
     train(X_us, y_us)
     train(X_os, y_os)
-"""
-print("\n\n{:-^50}".format("BROADLEAF"))
-X_us, y_us = getSample(
-    data_frame, ['broadleaf'])
-X_os, y_os = getSample(
-    data_frame, ['broadleaf'], undersample=False)
-train(X_us, y_us)
-train(X_os, y_os)
+
+    print("\n\n{:-^50}".format("BROADLEAF"))
+    X_us, y_us = getSample(
+        data_frame, ['broadleaf'])
+    X_os, y_os = getSample(
+        data_frame, ['broadleaf'], undersample=False)
+    train(X_us, y_us)
+    train(X_os, y_os)
