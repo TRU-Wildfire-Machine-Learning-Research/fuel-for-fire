@@ -99,47 +99,82 @@ def populateDataFrame(rasterBin):
     return data_frame
 
 
+def buildTrainingSet(X_true, X_false, class_):
+    os_list = [X_true, X_false]
+
+    X_full = pd.concat(os_list)
+
+    X = X_full.loc[:, : 'swir2']  # only considers the columns up to swir2
+    y = X_full[class_]
+
+    return X, y
+
+
+def normalizeData(X):
+    scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
+    X_norm = scaler.fit_transform(X)
+
+    return X_norm
+
+
+def oversample(X):
+    X_true_oversample = X.copy()
+
+    while len(X_true_oversample) < len(X_false):
+        os_l = [X_true_oversample, X]
+        X_true_oversample = pd.concat(os_l)
+    return X_true_oversample
+
+
 """
-Undersample the data (take a subset of false pixels 
+Undersample the data (take a subset of false pixels
 the same size as the true pixels)
 """
 
 
-def getSample(data_frame, undersample, normalize):
-    # get initial true and false for water
-    X_true = data_frame[data_frame['label_water_bool'] == True]
+def getSample(data_frame, classes, undersample, normalize):
+
+    # If we are combining classes
+    class_dict = {"water": "label_water_bool",
+                  "river": "label_river_bool",
+                  "shrub": "label_shrub_bool",
+                  "broadleaf": "label_broadleaf_bool"}
+    if len(classes) > 1:
+        print("OK")
+        # TO DO
+    else:
+        class_ = class_dict[classes[0].lower()]
+
+    print(class_dict)
+
+    X_true = data_frame[data_frame[class_] == True]
 
     if undersample:
 
         # Get the same number of false samples as true samples
         # ie (balance the classes)
-        X_false = data_frame[data_frame['label_water_bool']
+        X_false = data_frame[data_frame[class_]
                              == False].sample(len(X_true))
 
-        X, y = buildTrainingSet(X_true, X_false)
+        X, y = buildTrainingSet(X_true, X_false, class_)
 
         # Normalize the data
         if normalize:
-            scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
-            X_norm = scaler.fit_transform(X)
+            X_norm = normalizeData(X)
 
             return X_norm, y
         else:
             return X, y
     else:
-        X_false = data_frame[data_frame['label_water_bool']
+        X_false = data_frame[data_frame[class_]
                              == False]
-        X_true_oversample = X_true.copy()
 
-        while len(X_true_oversample) < len(X_false):
-            os_l = [X_true_oversample, X_true]
-            X_true_oversample = pd.concat(os_l)
+        X_oversample = oversample(X_true)
 
-        X, y = buildTrainingSet(X_true_oversample, X_false)
+        X, y = buildTrainingSet(X_oversample, X_false, class_)
 
         if normalize:
-            scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
-            X_norm = scaler.fit_transform(X)
+            X_norm = normalizeData(X)
 
             return X_norm, y
         else:
@@ -170,49 +205,28 @@ def train(X, y):
     sgd_classifier = SGDClassifier(random_state=42, verbose=1, warm_start=True)
 
     print("\n\nBegin Fitting\n")
+
     y_pred = sgd_classifier.fit(X_train, y_train).predict(X_test)
 
     print("\n{:*^30}\n".format("Training complete"))
-    print("Test score: {:.2f}".format(sgd_classifier.score(X_test, y_test)))
+    print("Test score: {:.3f}".format(sgd_classifier.score(X_test, y_test)))
 
     np.set_printoptions(precision=3)
 
-    cm = confusion_matrix(y_test, y_pred)
-
-    truenegative, falsepositive, falsenegative, truepositive = confusion_matrix(
-        y_test, y_pred).ravel()
-
-    print("Confusion Matrix\n", cm)
-    print("True Negative", truenegative)  # land guessed correctly
-    print("True Positive", truepositive)  # water guessed correctly
-    print("False Negative", falsenegative)  # Land guessed as water
-    print("False Positive", falsepositive)  # Water guessed as land
-    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-
-    truenegnorm = truenegative / (truenegative + falsenegative)
-    falseposnorm = falsepositive / (falsepositive + truepositive)
-    falsenegnorm = falsenegative / (falsenegative + truenegative)
-    trueposnorm = truepositive / (truepositive + falsepositive)
-
-    print("Confusion Matrix Percentages\n", cm)
-    print("True Negative", truenegnorm)  # land guessed correctly
-    print("True Positive", trueposnorm)  # water guessed correctly
-    print("False Negative", falsenegnorm)  # Land guessed as water
-    print("False Positive", falseposnorm)  # Water guessed as land
-    print("\n\n{:*^30}\n\n".format(""))
+    outputClassifierMetrics(y_test, y_pred)
 
 
 """
         LIST OF THE AVAILABLE DATA
 
     # vri_s2_objid2.tif_project_4x.bin_sub.bin
-    ## S2A.bin_4x.bin_sub.bin
-    ## BROADLEAF_SP.tif_project_4x.bin_sub.bin
-    ## WATERSP.tif_project_4x.bin_sub.bin
+    # S2A.bin_4x.bin_sub.bin
+    # BROADLEAF_SP.tif_project_4x.bin_sub.bin
+    # WATERSP.tif_project_4x.bin_sub.bin
     # MIXED_SP.tif_project_4x.bin_sub.bin
-    ## SHRUB_SP.tif_project_4x.bin_sub.bin
+    # SHRUB_SP.tif_project_4x.bin_sub.bin
     # vri_s3_objid2.tif_project_4x.bin_sub.bin
-    ## RiversSP.tif_project_4x.bin_sub.bin
+    # RiversSP.tif_project_4x.bin_sub.bin
     # L8.bin_4x.bin_sub.bin
     # CONIFER_SP.tif_project_4x.bin_sub.bin
     # HERB_GRAS_SP.tif_project_4x.bin_sub.bin
@@ -222,14 +236,12 @@ def train(X, y):
 
 if __name__ == "__main__":
 
-    dataPath = "../data/"
+    data_frame = populateDataFrame(getData("../data/"))
+    # print(data_frame.label_shrub_val)
 
-    rasters = getData(dataPath)
-
-    data_frame = populateDataFrame(rasters)
-    print(data_frame.columns.values)
-    X_us, y_us = getSample(data_frame, undersample=True, normalize=True)
-    X_os, y_os = getSample(data_frame, undersample=False, normalize=True)
+    X_us, y_us = getSample(
+        data_frame, ['water'], undersample=True, normalize=True)
+    # X_os, y_os = getSample(data_frame, undersample=False, normalize=True)
 
     train(X_us, y_us)
-    train(X_os, y_os)
+    # train(X_os, y_os)
