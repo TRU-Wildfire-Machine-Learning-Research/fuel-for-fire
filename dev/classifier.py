@@ -59,7 +59,9 @@ def populateDataFrame(rasterBin):
         'label_broadleaf_val',
         'label_broadleaf_bool',
         'label_shrub_val',
-        'label_shrub_bool'))
+        'label_shrub_bool',
+        'label_mixed_val',
+        'label_mixed_bool'))
 
     for raster in rasterBin:
 
@@ -92,6 +94,10 @@ def populateDataFrame(rasterBin):
             shrub = rasterio.open(raster).read(1)
             data_frame['label_shrub_val'] = shrub.ravel()
             # yet to decode the shrub values boolean correspondance
+        elif "MIXED_SP.tif_project_4x.bin_sub.bin" in raster:
+            mixed = rasterio.open(raster).read(1)
+            data_frame['label_mixed_val'] = mixed.ravel()
+            # yet to decode mixed
 
     return data_frame
 
@@ -238,6 +244,8 @@ def train(X, y):
 if __name__ == "__main__":
 
     data_frame = populateDataFrame(getData("../data/"))
+    unqShrubVals = data_frame['label_shrub_val'].unique()
+    # print(len(unqShrubVals))
 
     print("\n\n{:-^50}".format("WATER"))
     X_us, y_us = getSample(
