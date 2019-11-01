@@ -264,32 +264,22 @@ def train(X, y):
         # y_pred = clone_clf.predict(X_test_fold)
 
         # n_correct = sum(y_pred == y_test_fold)
-        # print(n_correct / len(y_pred))  # prints 0.9502, 0.96565 and 0.96495
+        # print(n_correct / len(y_pred))
 """
 
 
 """
-        LIST OF THE AVAILABLE DATA
+        LIST OF THE AVAILABLE DATA NOT INVESTIGATED
 
     ### vri_s2_objid2.tif_project_4x.bin_sub.bin
     ### S2A.bin_4x.bin_sub.bin
-    ### BROADLEAF_SP.tif_project_4x.bin_sub.bin
-    ### WATERSP.tif_project_4x.bin_sub.bin
-    # MIXED_SP.tif_project_4x.bin_sub.bin
-    # SHRUB_SP.tif_project_4x.bin_sub.bin
     ## vri_s3_objid2.tif_project_4x.bin_sub.bin
-    ## RiversSP.tif_project_4x.bin_sub.bin
     # L8.bin_4x.bin_sub.bin
-    ## CONIFER_SP.tif_project_4x.bin_sub.bin
-    ## HERB_GRAS_SP.tif_project_4x.bin_sub.bin
-    ## CCUTBL_SP.tif_project_4x.bin_sub.bin
-    ## EXPOSED_SP.tif_project_4x.bin_sub.bin
 """
 
 if __name__ == "__main__":
 
-    data_frame = populateDataFrame(getData("../data/"), showplots=True)
-    print(data_frame.drop_duplicates().exposed_val.value_counts())
+    data_frame = populateDataFrame(getData("../data/"), showplots=False)
 
 
 """
