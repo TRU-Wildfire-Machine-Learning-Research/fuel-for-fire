@@ -24,6 +24,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
+from rasterio.plot import show
 
 
 def getData(fp):
@@ -39,7 +40,7 @@ def getData(fp):
     return rasterBin
 
 
-def populateDataFrame(rasterBin, show=False):
+def populateDataFrame(rasterBin, showplots=False):
     data_frame = pd.DataFrame(columns=(
         'coastal_aerosol',
         'blue',
@@ -71,6 +72,7 @@ def populateDataFrame(rasterBin, show=False):
         'cutblock_bool',
         'exposed_val',
         'exposed_bool'))
+    imgBin = []
 
     for raster in rasterBin:
 
@@ -85,16 +87,19 @@ def populateDataFrame(rasterBin, show=False):
                 data_frame.iloc[:, idx-1] = dataset.read(idx).ravel()
 
         elif "WATERSP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             water = rasterio.open(raster).read(1)
             data_frame['water_val'] = water.ravel()
             data_frame['water_bool'] = data_frame['water_val'] != 128
 
         elif "RiversSP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             river = rasterio.open(raster).read(1)
             data_frame['river_val'] = river.ravel()
             data_frame['river_bool'] = data_frame['river_val'] == 1.0
 
         elif "BROADLEAF_SP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             broadleaf = rasterio.open(raster).read(1)
             data_frame['broadleaf_val'] = broadleaf.ravel()
             data_frame['broadleaf_bool'] = data_frame['broadleaf_val'] == 1.0
@@ -102,42 +107,54 @@ def populateDataFrame(rasterBin, show=False):
     # All need to be decoded to a boolean value from here on
 
         elif "SHRUB_SP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             shrub = rasterio.open(raster).read(1)
             data_frame['shrub_val'] = shrub.ravel()
-            plot.show(shrub, title="Shrub")
+            data_frame['shrub_bool'] = data_frame['shrub_val'] != 0.0
 
         elif "MIXED_SP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             mixed = rasterio.open(raster).read(1)
             data_frame['mixed_val'] = mixed.ravel()
             data_frame['mixed_bool'] = data_frame['mixed_val'] != 0.0
 
         elif "CONIFER_SP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             conifer = rasterio.open(raster).read(1)
             data_frame['conifer_val'] = conifer.ravel()
             # plot.show(conifer, title="Conifer")
 
         elif "HERB_GRAS_SP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             herb = rasterio.open(raster).read(1)
             data_frame['herb_val'] = herb.ravel()
             data_frame['herb_bool'] = data_frame['herb_val'] != 0.0
 
         elif "CCUTBL_SP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             cutblock = rasterio.open(raster).read(1)
             data_frame['cutblock_val'] = cutblock.ravel()
 
         elif "EXPOSED_SP.tif_project_4x.bin_sub.bin" in raster:
+            imgBin.append(raster)
             exposed = rasterio.open(raster).read(1)
             data_frame['exposed_val'] = exposed.ravel()
 
-    if(show):
-        plot.show(water, title="Water")
-        plot.show(river, title="River")
-        plot.show(broadleaf, title="Broadleaf")
-        plot.show(mixed, title="Mixed")
-        plot.show(herb, title="Herb")
-        plot.show(cutblock, title="Cutblock")
-        plot.show(exposed, title="Exposed")
+    if showplots:
+        print(len(imgBin))
+        fig, axes = plt.subplots(3, 3, figsize=(9, 7))
+        show(broadleaf, 1, ax=axes[0, 0], title="broadleaf")
+        show(water, 1, ax=axes[0, 1], title="water")
+        show(mixed, 3, ax=axes[0, 2], title="mixed")
+        show(shrub, 4, ax=axes[1, 0], title="shrub")
+        show(river, 5, ax=axes[1, 1], title="river")
+        show(conifer, 6, ax=axes[1, 2], title="conifer")
+        show(herb, 7, ax=axes[2, 0], title="herb")
+        show(cutblock, 8, ax=axes[2, 1], title="cutblock")
+        show(exposed, 9, ax=axes[2, 2], title="exposed")
 
+        plt.tight_layout()
+        plt.show()
     return data_frame
 
 
@@ -282,7 +299,7 @@ def train(X, y):
 
 if __name__ == "__main__":
 
-    data_frame = populateDataFrame(getData("../data/"))
+    data_frame = populateDataFrame(getData("../data/"), showplots=True)
     print(data_frame.drop_duplicates().herb_val.value_counts())
 
 """
