@@ -174,16 +174,34 @@ def oversample(X, X_false):
     return X_true_oversample
 
 
+def makeClassDictionary(data_frame):
+    column_values = [
+        col_name for col_name in data_frame.columns if "bool" in col_name]
+    column_keys = []
+    for key in column_values:
+        column_keys.append(key.replace("_bool", ""))
+    dictionary = dict(zip(column_keys, column_values))
+
+    return dictionary
+
+
+def generateUnionColumn(data_frame, classes):
+    dictionary = makeClassDictionary(data_frame)
+
+    # generate the new column name
+    # add this
+    # generate the union of the
+    return
+
+
 def getSample(data_frame, classes, undersample=True, normalize=True):
 
     # If we are combining classes
-    class_dict = {"water": "water_bool",
-                  "river": "river_bool",
-                  "shrub": "shrub_bool",
-                  "broadleaf": "broadleaf_bool"}
+
     if len(classes) > 1:
-        print("Program does not support multiple class unions")
-        # TO DO
+        # If we have multiple classes, let's create a new column
+        #  and treat it as a single class
+        data_frame, class_ = generateUnionColumn(data_frame, classes)
     else:
         class_ = class_dict[classes[0].lower()]
 
@@ -280,7 +298,8 @@ def train(X, y):
 if __name__ == "__main__":
 
     data_frame = populateDataFrame(getData("../data/"), showplots=False)
-
+    X_us, y_us = getSample(
+        data_frame, ['water', 'river'])
 
 """
     print("\n\n{:-^50}".format("WATER"))
