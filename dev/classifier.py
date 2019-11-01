@@ -104,6 +104,7 @@ def populateDataFrame(rasterBin, show=False):
         elif "SHRUB_SP.tif_project_4x.bin_sub.bin" in raster:
             shrub = rasterio.open(raster).read(1)
             data_frame['shrub_val'] = shrub.ravel()
+            plot.show(shrub, title="Shrub")
 
         elif "MIXED_SP.tif_project_4x.bin_sub.bin" in raster:
             mixed = rasterio.open(raster).read(1)
@@ -113,11 +114,12 @@ def populateDataFrame(rasterBin, show=False):
         elif "CONIFER_SP.tif_project_4x.bin_sub.bin" in raster:
             conifer = rasterio.open(raster).read(1)
             data_frame['conifer_val'] = conifer.ravel()
-            plot.show(conifer, title="Conifer")
+            # plot.show(conifer, title="Conifer")
 
         elif "HERB_GRAS_SP.tif_project_4x.bin_sub.bin" in raster:
             herb = rasterio.open(raster).read(1)
             data_frame['herb_val'] = herb.ravel()
+            data_frame['herb_bool'] = data_frame['herb_val'] != 0.0
 
         elif "CCUTBL_SP.tif_project_4x.bin_sub.bin" in raster:
             cutblock = rasterio.open(raster).read(1)
@@ -132,8 +134,6 @@ def populateDataFrame(rasterBin, show=False):
         plot.show(river, title="River")
         plot.show(broadleaf, title="Broadleaf")
         plot.show(mixed, title="Mixed")
-
-        plot.show(shrub, title="Shrub")
         plot.show(herb, title="Herb")
         plot.show(cutblock, title="Cutblock")
         plot.show(exposed, title="Exposed")
@@ -283,7 +283,7 @@ def train(X, y):
 if __name__ == "__main__":
 
     data_frame = populateDataFrame(getData("../data/"))
-    print(data_frame.drop_duplicates().conifer_val.value_counts())
+    print(data_frame.drop_duplicates().herb_val.value_counts())
 
 """
     print("\n\n{:-^50}".format("WATER"))
