@@ -185,23 +185,35 @@ def makeClassDictionary(data_frame):
     return dictionary
 
 
-def generateUnionColumn(data_frame, classes):
+def generateClassString(classes):
+    class_str = ""
+    for class_ in classes:
+        class_str = class_str + "_u_" + class_
+
+    return class_str[3:] + "_bool"
+
+
+def generateUnionColumn(data_frame, classes, dictionary):
+
+    class_str = generateClassString(classes)
+
+    data_frame[class_str] = data_frame[dictionary[classes[0]]]
+    for class_ in classes:
+        data_frame[class_str] = data_frame[dictionary[class_]
+                                           ] | data_frame[class_str]
+
     dictionary = makeClassDictionary(data_frame)
 
-    # generate the new column name
-    # add this
-    # generate the union of the
-    return
+    return data_frame, class_str, dictionary
 
 
 def getSample(data_frame, classes, undersample=True, normalize=True):
 
     # If we are combining classes
-
+    class_dict = makeClassDictionary(data_frame)
     if len(classes) > 1:
-        # If we have multiple classes, let's create a new column
-        #  and treat it as a single class
-        data_frame, class_ = generateUnionColumn(data_frame, classes)
+        data_frame, class_, class_dict = generateUnionColumn(
+            data_frame, classes, class_dict)
     else:
         class_ = class_dict[classes[0].lower()]
 
@@ -289,9 +301,9 @@ def train(X, y):
 """
         LIST OF THE AVAILABLE DATA NOT INVESTIGATED
 
-    ### vri_s2_objid2.tif_project_4x.bin_sub.bin
-    ### S2A.bin_4x.bin_sub.bin
-    ## vri_s3_objid2.tif_project_4x.bin_sub.bin
+    # vri_s2_objid2.tif_project_4x.bin_sub.bin
+    # S2A.bin_4x.bin_sub.bin
+    # vri_s3_objid2.tif_project_4x.bin_sub.bin
     # L8.bin_4x.bin_sub.bin
 """
 
@@ -300,6 +312,7 @@ if __name__ == "__main__":
     data_frame = populateDataFrame(getData("../data/"), showplots=False)
     X_us, y_us = getSample(
         data_frame, ['water', 'river'])
+    print(data_frame[data_frame['water_u_river_bool'] == True])
 
 """
     print("\n\n{:-^50}".format("WATER"))
