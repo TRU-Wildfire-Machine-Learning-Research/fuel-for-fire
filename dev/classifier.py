@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import rasterio
+from rasterio import plot
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -38,7 +39,7 @@ def getData(fp):
     return rasterBin
 
 
-def populateDataFrame(rasterBin):
+def populateDataFrame(rasterBin, show=False):
     data_frame = pd.DataFrame(columns=(
         'coastal_aerosol',
         'blue',
@@ -107,11 +108,12 @@ def populateDataFrame(rasterBin):
         elif "MIXED_SP.tif_project_4x.bin_sub.bin" in raster:
             mixed = rasterio.open(raster).read(1)
             data_frame['mixed_val'] = mixed.ravel()
-            # yet to decode mixed
+            data_frame['mixed_bool'] = data_frame['mixed_val'] != 0.0
 
         elif "CONIFER_SP.tif_project_4x.bin_sub.bin" in raster:
             conifer = rasterio.open(raster).read(1)
             data_frame['conifer_val'] = conifer.ravel()
+            plot.show(conifer, title="Conifer")
 
         elif "HERB_GRAS_SP.tif_project_4x.bin_sub.bin" in raster:
             herb = rasterio.open(raster).read(1)
@@ -124,6 +126,17 @@ def populateDataFrame(rasterBin):
         elif "EXPOSED_SP.tif_project_4x.bin_sub.bin" in raster:
             exposed = rasterio.open(raster).read(1)
             data_frame['exposed_val'] = exposed.ravel()
+
+    if(show):
+        plot.show(water, title="Water")
+        plot.show(river, title="River")
+        plot.show(broadleaf, title="Broadleaf")
+        plot.show(mixed, title="Mixed")
+
+        plot.show(shrub, title="Shrub")
+        plot.show(herb, title="Herb")
+        plot.show(cutblock, title="Cutblock")
+        plot.show(exposed, title="Exposed")
 
     return data_frame
 
@@ -270,13 +283,8 @@ def train(X, y):
 if __name__ == "__main__":
 
     data_frame = populateDataFrame(getData("../data/"))
+    print(data_frame.drop_duplicates().conifer_val.value_counts())
 
-    print(len(data_frame['shrub_val'].unique()))
-    print(len(data_frame['mixed_val'].unique()))
-    print(len(data_frame['conifer_val'].unique()))
-    print(len(data_frame['herb_val'].unique()))
-    print(len(data_frame['cutblock_val'].unique()))
-    print(len(data_frame['exposed_val'].unique()))
 """
     print("\n\n{:-^50}".format("WATER"))
     X_us, y_us = getSample(
