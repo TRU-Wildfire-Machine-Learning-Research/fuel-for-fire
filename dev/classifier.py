@@ -113,7 +113,7 @@ def populateDataFrame(rasterBin, showplots=False):
         elif "CONIFER_SP.tif_project_4x.bin_sub.bin" in raster:
             conifer = rasterio.open(raster).read(1)
             data_frame['conifer_val'] = conifer.ravel()
-            # Bit funky here on the vis side of things
+            data_frame['conifer_bool'] = data_frame['conifer_val'] != 0.0
 
         elif "HERB_GRAS_SP.tif_project_4x.bin_sub.bin" in raster:
             herb = rasterio.open(raster).read(1)
