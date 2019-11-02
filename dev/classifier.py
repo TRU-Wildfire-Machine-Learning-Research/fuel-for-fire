@@ -165,13 +165,13 @@ def normalizeData(X):
     return X_norm
 
 
-def oversample(X, X_false):
-    X_true_oversample = X.copy()
+def oversample(smallerClass, largerClass):
+    oversample = smallerClass.copy()
 
-    while len(X_true_oversample) < len(X_false):
-        os_l = [X_true_oversample, X]
-        X_true_oversample = pd.concat(os_l)
-    return X_true_oversample
+    while len(oversample) < len(largerClass):
+        os_l = [oversample, smallerClass]
+        oversample = pd.concat(os_l)
+    return oversample
 
 
 def makeClassDictionary(data_frame):
