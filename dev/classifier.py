@@ -220,10 +220,18 @@ def getSample(data_frame, classes, undersample=True, normalize=True):
         class_ = class_dict[classes.lower()]
 
     X_true = data_frame[data_frame[class_] == True]
+    X_false = data_frame[data_frame[class_]
+                         == False]
 
     if undersample:
-        X_false = data_frame[data_frame[class_]
-                             == False].sample(len(X_true))
+        if trueSampleIsSmaller(X_true, X_false):
+            # true is smaller, so take a subset of the false data
+            X_false = data_frame[data_frame[class_]
+                                 == False].sample(len(X_true))
+        else:
+            # false is smaller, so take a subset of the true data
+            X_true = data_frame[data_frame[class_]
+                                == True].sample(len(X_false))
 
         X, y = buildTrainingSet(X_true, X_false, class_)
 
