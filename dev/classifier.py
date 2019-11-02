@@ -206,16 +206,18 @@ def generateUnionColumn(data_frame, classes, dictionary):
 
     return data_frame, class_str, dictionary
 
+# Accepts a list of classes or a single string of a class
+
 
 def getSample(data_frame, classes, undersample=True, normalize=True):
 
     # If we are combining classes
     class_dict = makeClassDictionary(data_frame)
-    if len(classes) > 1:
+    if isinstance(classes, (list)):
         data_frame, class_, class_dict = generateUnionColumn(
             data_frame, classes, class_dict)
     else:
-        class_ = class_dict[classes[0].lower()]
+        class_ = class_dict[classes.lower()]
 
     X_true = data_frame[data_frame[class_] == True]
 
@@ -278,24 +280,6 @@ def train(X, y):
     print("\n{:*^30}\n".format("Training complete"))
     print("Test score: {:.3f}".format(sgd_classifier.score(X_test, y_test)))
     outputClassifierMetrics(y_test, y_pred_sgd)
-
-
-"""
-    for train_index, test_index in skfolds.split(X_train, y_train):
-
-        clone_clf = clone(sgd_classifier)
-
-        X_train_folds = X_train[train_index]
-        y_train_folds = (y_train[train_index])
-        X_test_fold = X_train[test_index]
-        y_test_fold = (y_train[test_index])
-        print(X_test_fold)
-        # clone_clf.fit(X_train_folds, y_train_folds)
-        # y_pred = clone_clf.predict(X_test_fold)
-
-        # n_correct = sum(y_pred == y_test_fold)
-        # print(n_correct / len(y_pred))
-"""
 
 
 """
