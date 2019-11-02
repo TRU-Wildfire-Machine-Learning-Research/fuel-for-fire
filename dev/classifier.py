@@ -240,12 +240,12 @@ def getSample(data_frame, classes, undersample=True, normalize=True):
         else:
             return X, y
     else:  # oversampling
-        X_false = data_frame[data_frame[class_]
-                             == False]
+        if trueSampleIsSmaller(X_true, X_false):
+            X_true = oversample(X_true, X_false)
+        else:
+            X_false = oversample(X_false, X_true)
 
-        X_oversample = oversample(X_true, X_false)
-
-        X, y = buildTrainingSet(X_oversample, X_false, class_)
+        X, y = buildTrainingSet(X_true, X_false, class_)
 
         if normalize:
             return normalizeData(X), y
