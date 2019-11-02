@@ -274,7 +274,7 @@ def train(X, y):
 
     # skfolds = StratifiedKFold(n_splits=3, random_state=42)
     sgd_classifier = SGDClassifier(
-        random_state=42, verbose=True)
+        random_state=42, verbose=False)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=0, test_size=0.2)
