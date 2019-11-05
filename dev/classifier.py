@@ -87,6 +87,7 @@ def populateDataFrame(rasterBin, showplots=False):
 
         elif "WATERSP.tif_project_4x.bin_sub.bin" in raster:
             water = rasterio.open(raster).read(1)
+            print(water.shape)
             data_frame['water_val'] = water.ravel()
             data_frame['water_bool'] = data_frame['water_val'] != 128
 
@@ -131,20 +132,30 @@ def populateDataFrame(rasterBin, showplots=False):
             data_frame['exposed_bool'] = data_frame['exposed_val'] != 0.0
 
     if showplots:
-        fig, axes = plt.subplots(3, 3, figsize=(9, 7))
-        show(broadleaf, ax=axes[0, 0], title="broadleaf")
-        show(water, ax=axes[0, 1], title="water")
-        show(mixed, ax=axes[0, 2], title="mixed")
-        show(shrub, ax=axes[1, 0], title="shrub")
-        show(river, ax=axes[1, 1], title="river")
-        show(conifer, ax=axes[1, 2], title="conifer")
-        show(herb, ax=axes[2, 0], title="herb")
-        show(clearcut, ax=axes[2, 1], title="clearcut")
-        show(exposed, ax=axes[2, 2], title="exposed")
-
-        plt.tight_layout()
-        plt.show()
+        plotTruthData(data_frame)
     return data_frame
+
+
+def plotTruthData(df):
+    dictionary = makeClassDictionary(df)
+    fig, axes = plt.subplots(3, 3, figsize=(9, 7))
+    fig.canvas.set_window_title('Ground Truth Labels')
+    col = 0
+    row = 0
+    for val in dictionary.keys():
+        arr = np.ones([164410], dtype='int')
+        valbool = val + "_bool"
+        true_df = df[valbool].loc[df[valbool] == True]
+        for idx in true_df.index:
+            arr[idx] = 0
+        rs_arr = arr.reshape(401, 410)
+        show(rs_arr, cmap='Greys', ax=axes[row, col], title=val)
+        col = col + 1
+        if col > 2:
+            col = 0
+            row = row + 1
+    plt.tight_layout()
+    plt.show()
 
 
 def buildTrainingSet(X_true, X_false, class_):
@@ -206,6 +217,9 @@ def generateUnionColumn(data_frame, classes, dictionary):
 
     return data_frame, class_str, dictionary
 
+
+def trueSampleIsSmaller(t, f):
+    return len(t) < len(f)
 # Accepts a list of classes or a single string of a class
 
 
@@ -301,33 +315,4 @@ def train(X, y):
 
 if __name__ == "__main__":
 
-    data_frame = populateDataFrame(getData("../data/"), showplots=False)
-    X_us, y_us = getSample(
-        data_frame, ['water', 'river'])
-    print(data_frame[data_frame['water_u_river_bool'] == True])
-
-"""
-    print("\n\n{:-^50}".format("WATER"))
-    X_us, y_us = getSample(
-        data_frame, ['water'])
-    X_os, y_os = getSample(
-        data_frame, ['water'], undersample=False)
-    train(X_us, y_us)
-    train(X_os, y_os)
-
-    print("\n\n{:-^50}".format("RIVER"))
-    X_us, y_us = getSample(
-        data_frame, ['river'])
-    X_os, y_os = getSample(
-        data_frame, ['river'], undersample=False)
-    train(X_us, y_us)
-    train(X_os, y_os)
-
-    print("\n\n{:-^50}".format("BROADLEAF"))
-    X_us, y_us = getSample(
-        data_frame, ['broadleaf'])
-    X_os, y_os = getSample(
-        data_frame, ['broadleaf'], undersample=False)
-    train(X_us, y_us)
-    train(X_os, y_os)
-"""
+    data_frame = populateDataFrame(getData("../data/"), showplots=True)
