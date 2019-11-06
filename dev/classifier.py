@@ -27,7 +27,7 @@ from sklearn.pipeline import Pipeline
 from rasterio.plot import show
 
 
-def getData(fp):
+def get_data(fp):
     # Specify the path to our data
 
     rasterBin = []
@@ -40,7 +40,7 @@ def getData(fp):
     return rasterBin
 
 
-def populateDataFrame(rasterBin, showplots=False):
+def populate_data_frame(rasterBin, showplots=False):
     data_frame = pd.DataFrame(columns=(
         'coastal_aerosol',
         'blue',
@@ -87,7 +87,6 @@ def populateDataFrame(rasterBin, showplots=False):
 
         elif "WATERSP.tif_project_4x.bin_sub.bin" in raster:
             water = rasterio.open(raster).read(1)
-            print(water.shape)
             data_frame['water_val'] = water.ravel()
             data_frame['water_bool'] = data_frame['water_val'] != 128
 
@@ -158,7 +157,7 @@ def plotTruthData(df):
     plt.show()
 
 
-def buildTrainingSet(X_true, X_false, class_):
+def get_training_set(X_true, X_false, class_):
     os_list = [X_true, X_false]
 
     X_full = pd.concat(os_list)
@@ -185,7 +184,7 @@ def oversample(smallerClass, largerClass):
     return oversample
 
 
-def makeClassDictionary(data_frame):
+def create_class_dictionary(data_frame):
     column_values = [
         col_name for col_name in data_frame.columns if "bool" in col_name]
     column_keys = []
@@ -196,7 +195,7 @@ def makeClassDictionary(data_frame):
     return dictionary
 
 
-def generateClassString(classes):
+def create_class_string(classes):
     class_str = ""
     for class_ in classes:
         class_str = class_str + "_u_" + class_
@@ -204,31 +203,30 @@ def generateClassString(classes):
     return class_str[3:] + "_bool"
 
 
-def generateUnionColumn(data_frame, classes, dictionary):
+def create_union_column(data_frame, classes, dictionary):
 
-    class_str = generateClassString(classes)
+    class_str = create_class_string(classes)
 
     data_frame[class_str] = data_frame[dictionary[classes[0]]]
     for class_ in classes:
         data_frame[class_str] = data_frame[dictionary[class_]
                                            ] | data_frame[class_str]
 
-    dictionary = makeClassDictionary(data_frame)
+    dictionary = create_class_dictionary(data_frame)
 
     return data_frame, class_str, dictionary
 
 
-def trueSampleIsSmaller(t, f):
+def true_sample_is_smaller(t, f):
     return len(t) < len(f)
-# Accepts a list of classes or a single string of a class
 
 
-def getSample(data_frame, classes, undersample=True, normalize=True):
+def get_sample(data_frame, classes, undersample=True, normalize=True):
 
     # If we are combining classes
-    class_dict = makeClassDictionary(data_frame)
+    class_dict = create_class_dictionary(data_frame)
     if isinstance(classes, (list)):
-        data_frame, class_, class_dict = generateUnionColumn(
+        data_frame, class_, class_dict = create_union_column(
             data_frame, classes, class_dict)
     else:
         class_ = class_dict[classes.lower()]
@@ -238,7 +236,7 @@ def getSample(data_frame, classes, undersample=True, normalize=True):
                          == False]
 
     if undersample:
-        if trueSampleIsSmaller(X_true, X_false):
+        if true_sample_is_smaller(X_true, X_false):
             # true is smaller, so take a subset of the false data
             X_false = data_frame[data_frame[class_]
                                  == False].sample(len(X_true))
@@ -247,19 +245,19 @@ def getSample(data_frame, classes, undersample=True, normalize=True):
             X_true = data_frame[data_frame[class_]
                                 == True].sample(len(X_false))
 
-        X, y = buildTrainingSet(X_true, X_false, class_)
+        X, y = get_training_set(X_true, X_false, class_)
 
         if normalize:
             return normalizeData(X), y
         else:
             return X, y
     else:  # oversampling
-        if trueSampleIsSmaller(X_true, X_false):
+        if true_sample_is_smaller(X_true, X_false):
             X_true = oversample(X_true, X_false)
         else:
             X_false = oversample(X_false, X_true)
 
-        X, y = buildTrainingSet(X_true, X_false, class_)
+        X, y = get_training_set(X_true, X_false, class_)
 
         if normalize:
             return normalizeData(X), y
@@ -267,7 +265,7 @@ def getSample(data_frame, classes, undersample=True, normalize=True):
             return X, y
 
 
-def outputClassifierMetrics(y_test, y_pred):
+def print_classifier_metrics(y_test, y_pred):
     cm = confusion_matrix(y_test, y_pred)
     truenegative, falsepositive, falsenegative, truepositive = confusion_matrix(
         y_test, y_pred).ravel()
@@ -301,7 +299,7 @@ def train(X, y):
 
     print("\n{:*^30}\n".format("Training complete"))
     print("Test score: {:.3f}".format(sgd_classifier.score(X_test, y_test)))
-    outputClassifierMetrics(y_test, y_pred_sgd)
+    print_classifier_metrics(y_test, y_pred_sgd)
 
 
 """
