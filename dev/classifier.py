@@ -131,24 +131,31 @@ def populate_data_frame(rasterBin, showplots=False):
             data_frame['exposed_bool'] = data_frame['exposed_val'] != 0.0
 
     if showplots:
-        plotTruthData(data_frame)
+        show_truth_data_subplot(data_frame, "Ground Truth Labels")
     return data_frame
 
 
-def plotTruthData(df):
-    dictionary = makeClassDictionary(df)
+def create_image_array(df, val):
+    arr = np.ones([164410], dtype='int')
+    valbool = val + "_bool"
+    true_df = df[valbool].loc[df[valbool] == True]
+    for idx in true_df.index:
+        arr[idx] = 0
+        rs_arr = arr.reshape(401, 410)
+    return rs_arr
+
+
+def show_truth_data_subplot(df, window_title="Figure 1"):
+    dictionary = create_class_dictionary(df)
     fig, axes = plt.subplots(3, 3, figsize=(9, 7))
-    fig.canvas.set_window_title('Ground Truth Labels')
+    fig.canvas.set_window_title(window_title)
     col = 0
     row = 0
-    for val in dictionary.keys():
-        arr = np.ones([164410], dtype='int')
-        valbool = val + "_bool"
-        true_df = df[valbool].loc[df[valbool] == True]
-        for idx in true_df.index:
-            arr[idx] = 0
-        rs_arr = arr.reshape(401, 410)
-        show(rs_arr, cmap='Greys', ax=axes[row, col], title=val)
+    for key in dictionary.keys():
+        arr = create_image_array(df, key)
+        show(arr, cmap='Greys', ax=axes[row, col], title=key)
+
+        # indexing the subplot
         col = col + 1
         if col > 2:
             col = 0
@@ -313,4 +320,4 @@ def train(X, y):
 
 if __name__ == "__main__":
 
-    data_frame = populateDataFrame(getData("../data/"), showplots=True)
+    data_frame = populate_data_frame(get_data("../data/"), showplots=True)
