@@ -283,10 +283,10 @@ def print_classifier_metrics(y_test, y_pred):
     print("")
     for arr in cm:
         print(arr)
-    print("\nTrue Negative", truenegative)  # land guessed correctly
-    print("True Positive", truepositive)  # water guessed correctly
-    print("False Negative", falsenegative)  # Land guessed as water
-    print("False Positive", falsepositive)  # Water guessed as land
+    print("\nTrue Negative", truenegative)  # False class guessed correctly
+    print("True Positive", truepositive)  # True class guessed correctly
+    print("False Negative", falsenegative)  # False class guessed as true class
+    print("False Positive", falsepositive)  # True class guessed as false class
 
 
 def train(X, y):
