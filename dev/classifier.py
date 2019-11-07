@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import os
 import rasterio
 from rasterio import plot
+from rasterio.plot import show
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -24,7 +26,6 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
-from rasterio.plot import show
 
 
 def get_data(fp):
@@ -367,7 +368,7 @@ def train(X, y):
 
 if __name__ == "__main__":
 
-    data_frame = populate_data_frame(get_data("../data/"), showplots=True)
+    data_frame = populate_data_frame(get_data("../data/"), showplots=False)
     class_dictionary = create_class_dictionary(data_frame)
 
     X, y = get_sample(data_frame, "water", undersample=False, normalize=True)
