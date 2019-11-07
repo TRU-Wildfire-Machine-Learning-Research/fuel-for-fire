@@ -291,10 +291,38 @@ def print_classifier_metrics(y_test, y_pred):
     print("False Positive", falsepositive)  # True class guessed as false class
 
 
-def train(X, y):
+def test_plot(df, clf, true_val):
+    # grab the test data (includes data the system was trained on)
+    all_data = df.loc[:, : 'swir2']
 
-    # skfolds = StratifiedKFold(n_splits=3, random_state=42)
-    sgd_classifier = SGDClassifier(
+    y_pred = clf.predict(all_data)  # predict on all the data
+    y_true = df[true_val + "_bool"]  # store the true values
+
+    arr = np.zeros([164410], dtype='int')
+
+    for x in range(len(y_pred)):  # iterate the length of the arrays
+        if y_true[x]:
+            if y_pred[x]:
+                arr[x] = 1
+                # this is true positive
+            else:
+                arr[x] = 2
+                # This is false negative
+        else:
+            if y_pred[x]:
+                arr[x] = 3
+                # this is false positive
+            else:
+                arr[x] = 4
+                # this is true negative
+    arr = arr.reshape(401, 410)
+    plt.imshow(arr)
+
+    plt.show()
+
+
+def train(X, y):
+    sgd_clf = SGDClassifier(
         random_state=42, verbose=False)
 
     X_train, X_test, y_train, y_test = train_test_split(
