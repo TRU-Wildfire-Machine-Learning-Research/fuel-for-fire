@@ -351,6 +351,9 @@ def show_original_image(df):
 
 
 def rescale(arr):
+    """
+    https://stackoverflow.com/questions/48571486/converting-from-numpy-arrays-to-a-rgb-image
+    """
     arr_min = arr.min()
     arr_max = arr.max()
     return (arr - arr_min) / (arr_max - arr_min)
