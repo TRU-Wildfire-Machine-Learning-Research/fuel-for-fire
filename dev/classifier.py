@@ -5,6 +5,7 @@ import os
 import rasterio
 from rasterio import plot
 from rasterio.plot import show
+from PIL import Image
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -337,6 +338,24 @@ def test_plot(df, clf, true_val):
     plt.show()
 
 
+def show_original_image(df):
+    blue = rescale(df.blue.values.reshape(401, 410))
+    red = rescale(df.red.values.reshape(401, 410))
+    green = rescale(df.green.values.reshape(401, 410))
+    arr = np.zeros((401, 410, 3))
+    arr[:, :, 0] = red
+    arr[:, :, 1] = green
+    arr[:, :, 2] = blue
+    plt.imshow(arr)
+    plt.show()
+
+
+def rescale(arr):
+    arr_min = arr.min()
+    arr_max = arr.max()
+    return (arr - arr_min) / (arr_max - arr_min)
+
+
 def train(X, y):
     sgd_clf = SGDClassifier(
         random_state=42, verbose=False)
@@ -370,9 +389,12 @@ if __name__ == "__main__":
 
     data_frame = populate_data_frame(get_data("../data/"), showplots=False)
     class_dictionary = create_class_dictionary(data_frame)
+    show_original_image(data_frame)
 
+    """
     X, y = get_sample(data_frame, "water", undersample=False, normalize=True)
 
     clf = train(X, y)  # generate a classifier
 
     test_plot(data_frame, clf, "water")
+    """
