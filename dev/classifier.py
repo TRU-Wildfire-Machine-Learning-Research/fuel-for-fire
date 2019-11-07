@@ -316,7 +316,22 @@ def test_plot(df, clf, true_val):
                 arr[x] = 4
                 # this is true negative
     arr = arr.reshape(401, 410)
-    plt.imshow(arr)
+    plt.xlabel(xlabel='width (px)')
+    plt.ylabel(ylabel='height (px)')
+
+    # legend_elements = [Patch(
+    #     label='True Negative'), Patch(
+    #     label='False Positive')]
+
+    # Create the figure
+    # fig, ax = plt.subplots()
+    # ax.legend(handles=legend_elements)
+    im = plt.imshow(arr)
+    # colors = [im.cmap(im.value) for value in arr]
+
+    # patches = [Patch(color=colors[i], label="Level {l}".format(l = arr[i])) for i in range(len(arr))]
+    # put those patched as legend-handles into the legend
+    # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
     plt.show()
 
