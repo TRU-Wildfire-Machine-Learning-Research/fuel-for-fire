@@ -332,11 +332,13 @@ def train(X, y):
 
     print("\n\nBegin Fitting SGD\n")
 
-    y_pred_sgd = sgd_classifier.fit(X_train, y_train).predict(X_test)
+    sgd_clf = sgd_clf.fit(X_train, y_train)
+    y_pred = sgd_clf.predict(X_test)
 
     print("\n{:*^30}\n".format("Training complete"))
-    print("Test score: {:.3f}".format(sgd_classifier.score(X_test, y_test)))
-    print_classifier_metrics(y_test, y_pred_sgd)
+    print("Test score: {:.3f}".format(sgd_clf.score(X_test, y_test)))
+    print_classifier_metrics(y_test, y_pred)
+    return sgd_clf
 
 
 """
@@ -351,3 +353,10 @@ def train(X, y):
 if __name__ == "__main__":
 
     data_frame = populate_data_frame(get_data("../data/"), showplots=True)
+    class_dictionary = create_class_dictionary(data_frame)
+
+    X, y = get_sample(data_frame, "water", undersample=False, normalize=True)
+
+    clf = train(X, y)  # generate a classifier
+
+    test_plot(data_frame, clf, "water")
