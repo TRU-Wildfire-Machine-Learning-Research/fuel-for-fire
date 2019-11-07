@@ -305,17 +305,17 @@ def test_plot(df, clf, true_val):
     for x in range(len(y_pred)):  # iterate the length of the arrays
         if y_true[x]:
             if y_pred[x]:
-                arr[x] = 1
+                arr[x] = 0
                 # this is true positive
             else:
-                arr[x] = 2
+                arr[x] = 5
                 # This is false negative
         else:
             if y_pred[x]:
-                arr[x] = 3
+                arr[x] = 10
                 # this is false positive
             else:
-                arr[x] = 4
+                arr[x] = 15
                 # this is true negative
     arr = arr.reshape(401, 410)
     plt.xlabel(xlabel='width (px)')
