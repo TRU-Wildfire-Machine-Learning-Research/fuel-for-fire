@@ -154,12 +154,14 @@ def show_truth_data_subplot(df, window_title="Figure 1"):
     for key in dictionary.keys():
         arr = create_image_array(df, key)
         show(arr, cmap='Greys', ax=axes[row, col], title=key)
+        axes[row, col].set(xlabel='width (px)', ylabel='height (px)')
 
         # indexing the subplot
         col = col + 1
         if col > 2:
             col = 0
             row = row + 1
+
     plt.tight_layout()
     plt.show()
 
