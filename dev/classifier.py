@@ -30,7 +30,12 @@ from sklearn.pipeline import Pipeline
 
 
 def get_data(fp):
-    # Specify the path to our data
+    """Assumes the filepath provided contains both
+        .hdr and .bin files within the fp provided in the function
+        call. 
+
+        returns a list of file paths to .bin files
+    """
 
     rasterBin = []
     for root, dirs, files in os.walk(fp, topdown=False):
@@ -43,6 +48,21 @@ def get_data(fp):
 
 
 def populate_data_frame(rasterBin, showplots=False):
+    """Receives a list of file paths to .bin files. 
+        A ground truth raster (predefined) is read, 
+        band by band, and stored in the data_frame.
+        Additional 'labeled' truth data images are 
+        read and saved to the dataframe. These values
+        are also decoded to binary interpretations, and
+        the binary interpretation is stored in its own
+        column. 
+
+        Showplots argument added to visualize the raw data
+        and the truth data.
+
+
+        Returns a populated pandas dataframe.
+    """
     data_frame = pd.DataFrame(columns=(
         'coastal_aerosol',
         'blue',
@@ -83,7 +103,7 @@ def populate_data_frame(rasterBin, showplots=False):
             for idx in dataset.indexes:
                 """
                 reads in the current band which is a mat of 401, 410 and ravels it
-                storing the result in the current column
+                storing the result in the current column. ie(X values)
                 """
                 data_frame.iloc[:, idx-1] = dataset.read(idx).ravel()
 
@@ -133,21 +153,33 @@ def populate_data_frame(rasterBin, showplots=False):
             data_frame['exposed_bool'] = data_frame['exposed_val'] != 0.0
 
     if showplots:
-        show_truth_data_subplot(data_frame, "Ground Truth Labels")
+        show_original_image(data_frame)
+        show_truth_data_subplot(data_frame)
     return data_frame
 
 
-def create_image_array(df, val):
-    arr = np.ones([164410], dtype='int')
-    valbool = val + "_bool"
-    true_df = df[valbool].loc[df[valbool] == True]
+def create_image_array(df, class_):
+    """Generates a numpy.ndarray the same
+        size as the raw data (statically defined) 
+        that is used to visualize a binary representation
+        of truth data.
+
+        returns a ndarray.
+    """
+    arr = np.ones([len(df)], dtype='int')
+    class_bool = class_ + "_bool"
+    true_df = df[class_bool].loc[df[class_bool] == True]
     for idx in true_df.index:
         arr[idx] = 0
         rs_arr = arr.reshape(401, 410)
     return rs_arr
 
 
-def show_truth_data_subplot(df, window_title="Figure 1"):
+def show_truth_data_subplot(df, window_title="Truth Data"):
+    """Displays a subplot of all the truth data in a binary
+        fashion.
+
+    """
     dictionary = create_class_dictionary(df)
     fig, axes = plt.subplots(3, 3, figsize=(9, 7))
     fig.canvas.set_window_title(window_title)
@@ -169,13 +201,18 @@ def show_truth_data_subplot(df, window_title="Figure 1"):
 
 
 def get_training_set(X_true, X_false, class_):
+    """Concatenates true pixels and false pixels into a fingle data to
+        create a dataset. 
+
+        Returns X, a pandas dataframe, and y, a pandas series
+    """
     os_list = [X_true, X_false]
 
     X_full = pd.concat(os_list)
 
-    X = X_full.loc[:, : 'swir2']  # only considers the columns up to swir2
+    # only considers the columns up to swir2 (truth data's end col)
+    X = X_full.loc[:, : 'swir2']
     y = X_full[class_]
-
     return X, y
 
 
@@ -187,6 +224,11 @@ def normalizeData(X):
 
 
 def oversample(smallerClass, largerClass):
+    """A naive approach to oversampling data.
+
+        Returns pandas dataframe.
+
+    """
     oversample = smallerClass.copy()
 
     while len(oversample) < len(largerClass):
