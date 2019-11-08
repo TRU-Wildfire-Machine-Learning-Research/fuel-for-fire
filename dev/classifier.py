@@ -335,7 +335,7 @@ def print_classifier_metrics(y_test, y_pred):
     print("False Positive", falsepositive)  # True class guessed as false class
 
 
-def test_plot(df, clf, true_val):
+def plot_confusion_matrix_image(df, clf, true_val):
     # grab the test data (includes data the system was trained on)
     all_data = df.loc[:, : 'swir2']
 
