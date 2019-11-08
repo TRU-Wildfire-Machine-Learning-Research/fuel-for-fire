@@ -5,7 +5,6 @@ import os
 import rasterio
 from rasterio import plot
 from rasterio.plot import show
-from PIL import Image
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -238,6 +237,15 @@ def oversample(smallerClass, largerClass):
 
 
 def create_class_dictionary(data_frame):
+    """dictionary for making simple requests for data from
+        the dataframe. Key corresponds to a class name
+        ie, water. The value associated with any key is
+        simply the key with '_bool' appended to the end
+        of the string.
+
+        returns a dictionary
+
+    """
     column_values = [
         col_name for col_name in data_frame.columns if "bool" in col_name]
     column_keys = []
@@ -248,7 +256,12 @@ def create_class_dictionary(data_frame):
     return dictionary
 
 
-def create_class_string(classes):
+def create_union_class_string(classes):
+    """creates a string used for naming
+        a new column (union of classes)in a dataframe.
+
+        returns a string
+    """
     class_str = ""
     for class_ in classes:
         class_str = class_str + "_u_" + class_
@@ -257,8 +270,17 @@ def create_class_string(classes):
 
 
 def create_union_column(data_frame, classes, dictionary):
+    """generates a new column of data based on two or more
+        columns of data. This augments the passed dataframe.
 
-    class_str = create_class_string(classes)
+        returns a pandas dataframe with a new column, the string
+        that corresponds to that columns name in the dataframe, 
+        and a class dictionary with the new class added to the
+        dictionary.
+
+    """
+
+    class_str = create_union_class_string(classes)
 
     data_frame[class_str] = data_frame[dictionary[classes[0]]]
     for class_ in classes:
@@ -275,9 +297,16 @@ def true_sample_is_smaller(t, f):
 
 
 def get_sample(data_frame, classes, undersample=True, normalize=True):
+    """retrieves a class balanced sample of data from the dataframe.
+        That is, false class, balanced with true class, with options to
+        normalize the feature data, or oversample.
 
-    # If we are combining classes
+        returns features, X and targets, y
+
+    """
+
     class_dict = create_class_dictionary(data_frame)
+
     if isinstance(classes, (list)):
         data_frame, class_, class_dict = create_union_column(
             data_frame, classes, class_dict)
@@ -289,10 +318,12 @@ def get_sample(data_frame, classes, undersample=True, normalize=True):
                          == False]
 
     if undersample:
+
         if true_sample_is_smaller(X_true, X_false):
             # true is smaller, so take a subset of the false data
             X_false = data_frame[data_frame[class_]
                                  == False].sample(len(X_true))
+
         else:
             # false is smaller, so take a subset of the true data
             X_true = data_frame[data_frame[class_]
@@ -304,9 +335,12 @@ def get_sample(data_frame, classes, undersample=True, normalize=True):
             return normalizeData(X), y
         else:
             return X, y
+
     else:  # oversampling
+
         if true_sample_is_smaller(X_true, X_false):
             X_true = oversample(X_true, X_false)
+
         else:
             X_false = oversample(X_false, X_true)
 
@@ -319,6 +353,9 @@ def get_sample(data_frame, classes, undersample=True, normalize=True):
 
 
 def print_classifier_metrics(y_test, y_pred):
+    """
+
+    """
     cm = confusion_matrix(y_test, y_pred)
     truenegative, falsepositive, falsenegative, truepositive = confusion_matrix(
         y_test, y_pred).ravel()
@@ -336,6 +373,10 @@ def print_classifier_metrics(y_test, y_pred):
 
 
 def plot_confusion_matrix_image(df, clf, true_val):
+    """UNDER DEVELOPMENT
+
+    """
+
     # grab the test data (includes data the system was trained on)
     all_data = df.loc[:, : 'swir2']
 
@@ -351,11 +392,11 @@ def plot_confusion_matrix_image(df, clf, true_val):
                 # this is true positive
             else:
                 arr[x] = 5
-                # This is false negative
+                # This is false positive
         else:
             if y_pred[x]:
                 arr[x] = 10
-                # this is false positive
+                # this is false negative
             else:
                 arr[x] = 15
                 # this is true negative
@@ -381,6 +422,12 @@ def plot_confusion_matrix_image(df, clf, true_val):
 
 
 def show_original_image(df):
+    """builds an array of the RGB values of the
+        truth image, scaling the original values
+        between 0 - 1 (matplotlib req.) and
+        displays that image in a plot.
+
+    """
     blue = rescale(df.blue.values.reshape(401, 410))
     red = rescale(df.red.values.reshape(401, 410))
     green = rescale(df.green.values.reshape(401, 410))
@@ -402,6 +449,9 @@ def rescale(arr):
 
 
 def train(X, y):
+    """sklearn SGDClassifier
+
+    """
     sgd_clf = SGDClassifier(
         random_state=42, verbose=False)
 
