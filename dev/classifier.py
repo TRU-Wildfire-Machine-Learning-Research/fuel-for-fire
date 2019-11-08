@@ -370,7 +370,7 @@ def plot_confusion_matrix_image(df, clf, true_val):
     # Create the figure
     # fig, ax = plt.subplots()
     # ax.legend(handles=legend_elements)
-    im = plt.imshow(arr)
+    plt.imshow(arr)
     # colors = [im.cmap(im.value) for value in arr]
 
     # patches = [Patch(color=colors[i], label="Level {l}".format(l = arr[i])) for i in range(len(arr))]
