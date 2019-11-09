@@ -483,13 +483,13 @@ def train(X, y):
 
 if __name__ == "__main__":
 
-    data_frame = populate_data_frame(get_data("../data/"), showplots=True)
+    data_frame = populate_data_frame(get_data("../data/"), showplots=False)
 
     class_dictionary = create_class_dictionary(data_frame)
 
-    X, y = get_sample(data_frame, ["shrub", "herb"],
+    X, y = get_sample(data_frame, ["water", "river"],
                       undersample=False, normalize=True)
 
     clf = train(X, y)  # generate a classifier
 
-    plot_confusion_matrix_image(data_frame, clf, "shrub_u_herb")
+    plot_confusion_matrix_image(data_frame, clf, "water_u_river")
