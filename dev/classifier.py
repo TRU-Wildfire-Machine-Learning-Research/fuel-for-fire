@@ -176,6 +176,26 @@ def create_image_array(df, class_):
     return rs_arr
 
 
+def create_class_dictionary(data_frame):
+    """dictionary for making simple requests for data from
+        the dataframe. Key corresponds to a class name
+        ie, water. The value associated with any key is
+        simply the key with '_bool' appended to the end
+        of the string.
+
+        returns a dictionary
+
+    """
+    column_values = [
+        col_name for col_name in data_frame.columns if "bool" in col_name]
+    column_keys = []
+    for key in column_values:
+        column_keys.append(key.replace("_bool", ""))
+    dictionary = dict(zip(column_keys, column_values))
+
+    return dictionary
+
+
 def show_truth_data_subplot(df, window_title="Truth Data"):
     """Displays a subplot of all the truth data in a binary
         fashion.
@@ -201,8 +221,82 @@ def show_truth_data_subplot(df, window_title="Truth Data"):
     plt.show()
 
 
+def plot_confusion_matrix_image(df, clf, true_val):
+    """UNDER DEVELOPMENT
+
+    """
+
+    # grab the test data (includes data the system was trained on)
+    all_data = df.loc[:, : 'swir2']
+
+    y_pred = clf.predict(all_data)  # predict on all the data
+    y_true = df[true_val + "_bool"]  # store the true values
+
+    arr = np.zeros([164410], dtype='int')
+
+    for x in range(len(y_pred)):  # iterate the length of the arrays
+        if y_true[x]:
+            if y_pred[x]:
+                arr[x] = 0
+                # this is true positive
+            else:
+                arr[x] = 5
+                # This is false positive
+        else:
+            if y_pred[x]:
+                arr[x] = 10
+                # this is false negative
+            else:
+                arr[x] = 15
+                # this is true negative
+    arr = arr.reshape(401, 410)
+    plt.xlabel(xlabel='width (px)')
+    plt.ylabel(ylabel='height (px)')
+
+    # legend_elements = [Patch(
+    #     label='True Negative'), Patch(
+    #     label='False Positive')]
+
+    # Create the figure
+    # fig, ax = plt.subplots()
+    # ax.legend(handles=legend_elements)
+    plt.imshow(arr)
+    # colors = [im.cmap(im.value) for value in arr]
+
+    # patches = [Patch(color=colors[i], label="Level {l}".format(l = arr[i])) for i in range(len(arr))]
+    # put those patched as legend-handles into the legend
+    # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
+    plt.show()
+
+
+def show_original_image(df):
+    """builds an array of the RGB values of the
+        truth image, scaling the original values
+        between 0 - 1 (matplotlib req.) and
+        displays that image in a plot.
+
+    """
+    blue = rescale(df.blue.values.reshape(401, 410))
+    red = rescale(df.red.values.reshape(401, 410))
+    green = rescale(df.green.values.reshape(401, 410))
+    arr = np.zeros((401, 410, 3))
+    arr[:, :, 0] = red
+    arr[:, :, 1] = green
+    arr[:, :, 2] = blue
+    plt.imshow(arr)
+    plt.show()
+
+
+def rescale(arr):
+    arr_min = arr.min()
+    arr_max = arr.max()
+
+    return (arr - arr_min) / (arr_max - arr_min)
+
+
 def get_training_set(X_true, X_false, class_):
-    """Concatenates true pixels and false pixels into a fingle data to
+    """Concatenates true pixels and false pixels into a single dataframe to
         create a dataset. 
 
         Returns X, a pandas dataframe, and y, a pandas series
@@ -235,27 +329,8 @@ def oversample(smallerClass, largerClass):
     while len(oversample) < len(largerClass):
         os_l = [oversample, smallerClass]
         oversample = pd.concat(os_l)
+
     return oversample
-
-
-def create_class_dictionary(data_frame):
-    """dictionary for making simple requests for data from
-        the dataframe. Key corresponds to a class name
-        ie, water. The value associated with any key is
-        simply the key with '_bool' appended to the end
-        of the string.
-
-        returns a dictionary
-
-    """
-    column_values = [
-        col_name for col_name in data_frame.columns if "bool" in col_name]
-    column_keys = []
-    for key in column_values:
-        column_keys.append(key.replace("_bool", ""))
-    dictionary = dict(zip(column_keys, column_values))
-
-    return dictionary
 
 
 def create_union_class_string(classes):
@@ -372,80 +447,6 @@ def print_classifier_metrics(y_test, y_pred):
     print("True Positive", truepositive)  # True class guessed correctly
     print("False Negative", falsenegative)  # False class guessed as true class
     print("False Positive", falsepositive)  # True class guessed as false class
-
-
-def plot_confusion_matrix_image(df, clf, true_val):
-    """UNDER DEVELOPMENT
-
-    """
-
-    # grab the test data (includes data the system was trained on)
-    all_data = df.loc[:, : 'swir2']
-
-    y_pred = clf.predict(all_data)  # predict on all the data
-    y_true = df[true_val + "_bool"]  # store the true values
-
-    arr = np.zeros([164410], dtype='int')
-
-    for x in range(len(y_pred)):  # iterate the length of the arrays
-        if y_true[x]:
-            if y_pred[x]:
-                arr[x] = 0
-                # this is true positive
-            else:
-                arr[x] = 5
-                # This is false positive
-        else:
-            if y_pred[x]:
-                arr[x] = 10
-                # this is false negative
-            else:
-                arr[x] = 15
-                # this is true negative
-    arr = arr.reshape(401, 410)
-    plt.xlabel(xlabel='width (px)')
-    plt.ylabel(ylabel='height (px)')
-
-    # legend_elements = [Patch(
-    #     label='True Negative'), Patch(
-    #     label='False Positive')]
-
-    # Create the figure
-    # fig, ax = plt.subplots()
-    # ax.legend(handles=legend_elements)
-    plt.imshow(arr)
-    # colors = [im.cmap(im.value) for value in arr]
-
-    # patches = [Patch(color=colors[i], label="Level {l}".format(l = arr[i])) for i in range(len(arr))]
-    # put those patched as legend-handles into the legend
-    # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-    plt.show()
-
-
-def show_original_image(df):
-    """builds an array of the RGB values of the
-        truth image, scaling the original values
-        between 0 - 1 (matplotlib req.) and
-        displays that image in a plot.
-
-    """
-    blue = rescale(df.blue.values.reshape(401, 410))
-    red = rescale(df.red.values.reshape(401, 410))
-    green = rescale(df.green.values.reshape(401, 410))
-    arr = np.zeros((401, 410, 3))
-    arr[:, :, 0] = red
-    arr[:, :, 1] = green
-    arr[:, :, 2] = blue
-    plt.imshow(arr)
-    plt.show()
-
-
-def rescale(arr):
-    arr_min = arr.min()
-    arr_max = arr.max()
-
-    return (arr - arr_min) / (arr_max - arr_min)
 
 
 def train(X, y):
