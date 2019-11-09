@@ -170,7 +170,9 @@ def create_image_array(df, class_):
     true_df = df[class_bool].loc[df[class_bool] == True]
     for idx in true_df.index:
         arr[idx] = 0
-        rs_arr = arr.reshape(401, 410)
+
+    rs_arr = arr.reshape(401, 410)
+
     return rs_arr
 
 
