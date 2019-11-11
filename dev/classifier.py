@@ -369,6 +369,20 @@ def create_union_column(data_frame, classes, dictionary):
     return data_frame, class_str, dictionary
 
 
+def check_intersection_column(df, col1, col2):
+    """Does an AND operation on col1 and col2,
+        printing the result. This represents
+        the number of pixels that exist in class1
+        and class2
+    """
+    col1b = col1 + "_bool"
+    col2b = col2 + "_bool"
+    res = df[col1b] & df[col2b]
+
+    x = pd.value_counts(res)
+    print(col1, "and", col2 + ": ", x[1])
+
+
 def true_sample_is_smaller(t, f):
     return len(t) < len(f)
 
@@ -493,3 +507,5 @@ if __name__ == "__main__":
     clf = train(X, y)  # generate a classifier
 
     plot_confusion_matrix_image(data_frame, clf, "water_u_river")
+    """
+    check_intersection_column(data_frame, "conifer", "mixed")
