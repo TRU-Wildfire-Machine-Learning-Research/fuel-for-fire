@@ -116,6 +116,10 @@ def populate_data_frame(rasterBin, showplots=False):
                 storing the result in the current column. ie(X values)
                 """
                 data_frame.iloc[:, idx-1] = dataset.read(idx).ravel()
+        elif "L8.bin_4x.bin_sub.bin" in raster:
+            dataset = rasterio.open(raster)
+            for idx in dataset.indexes:
+                data_frame.iloc[:, idx+11] = dataset.read(idx).ravel()
 
         elif "WATERSP.tif_project_4x.bin_sub.bin" in raster:
             water = rasterio.open(raster).read(1)
