@@ -411,7 +411,7 @@ def true_sample_is_smaller(t, f):
     return len(t) < len(f)
 
 
-def get_sample(data_frame, classes, undersample=True, normalize=True):
+def get_sample(data_frame, classes, data='all', undersample=True, normalize=True):
     """retrieves a class balanced sample of data from the dataframe.
         That is, false class, balanced with true class, with options to
         normalize the feature data, or oversample.
