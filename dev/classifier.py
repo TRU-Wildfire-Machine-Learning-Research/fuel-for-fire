@@ -237,10 +237,12 @@ def plot_confusion_matrix_image(df, clf, true_val, data):
     """UNDER DEVELOPMENT
 
     """
+    if data == 'all':
+        raw_data = df.loc[:, : 'L8_longwave_infrared2']
 
-    # grab the test data (includes data the system was trained on)
-    if data == 's':
-        raw_data = df.loc[:, : 'S8_swir2']
+    elif data == 's':
+        raw_data = df.loc[:, : 'S2_swir2']
+
     elif data == 'l':
         raw_data = df.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
 
