@@ -233,15 +233,18 @@ def show_truth_data_subplot(df, window_title="Truth Data"):
     plt.show()
 
 
-def plot_confusion_matrix_image(df, clf, true_val):
+def plot_confusion_matrix_image(df, clf, true_val, data):
     """UNDER DEVELOPMENT
 
     """
 
     # grab the test data (includes data the system was trained on)
-    all_data = df.loc[:, : 'swir2']
+    if data == 's':
+        raw_data = df.loc[:, : 'S8_swir2']
+    elif data == 'l':
+        raw_data = df.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
 
-    y_pred = clf.predict(all_data)  # predict on all the data
+    y_pred = clf.predict(raw_data)  # predict on all the data
     y_true = df[true_val + "_bool"]  # store the true values
 
     arr = np.zeros([164410], dtype='int')
