@@ -111,11 +111,8 @@ def populate_data_frame(rasterBin, showplots=False):
 
             dataset = rasterio.open(raster)
             for idx in dataset.indexes:
-                """
-                reads in the current band which is a mat of 401, 410 and ravels it
-                storing the result in the current column. ie(X values)
-                """
                 data_frame.iloc[:, idx-1] = dataset.read(idx).ravel()
+
         elif "L8.bin_4x.bin_sub.bin" in raster:
             dataset = rasterio.open(raster)
             for idx in dataset.indexes:
