@@ -287,20 +287,35 @@ def plot_confusion_matrix_image(df, clf, true_val, data):
     plt.show()
 
 
-def show_original_image(df):
+def show_original_image(df, data):
     """builds an array of the RGB values of the
         truth image, scaling the original values
         between 0 - 1 (matplotlib req.) and
         displays that image in a plot.
 
     """
-    blue = rescale(df.blue.values.reshape(401, 410))
-    red = rescale(df.red.values.reshape(401, 410))
-    green = rescale(df.green.values.reshape(401, 410))
+
     arr = np.zeros((401, 410, 3))
+
+    if data == 's':
+
+        blue = rescale(df.S2_blue.values.reshape(401, 410))
+        red = rescale(df.S2_red.values.reshape(401, 410))
+        green = rescale(df.S2_green.values.reshape(401, 410))
+
+    elif data == 'l':
+
+        blue = rescale(df.L8_blue.values.reshape(401, 410))
+        red = rescale(df.L8_red.values.reshape(401, 410))
+        green = rescale(df.L8_green.values.reshape(401, 410))
+
+    else:
+        print("Specify an image to show ('s' for sentinel2 or 'l' for landsat8)")
+
     arr[:, :, 0] = red
     arr[:, :, 1] = green
     arr[:, :, 2] = blue
+
     plt.imshow(arr)
     plt.show()
 
