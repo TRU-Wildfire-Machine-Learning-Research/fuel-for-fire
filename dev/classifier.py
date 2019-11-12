@@ -310,9 +310,9 @@ def rescale(arr):
     return (arr - arr_min) / (arr_max - arr_min)
 
 
-def get_training_set(X_true, X_false, class_):
+def get_training_set(data, X_true, X_false, class_):
     """Concatenates true pixels and false pixels into a single dataframe to
-        create a dataset. 
+        create a dataset.
 
         Returns X, a pandas dataframe, and y, a pandas series
     """
@@ -320,8 +320,17 @@ def get_training_set(X_true, X_false, class_):
 
     X_full = pd.concat(os_list)
 
-    # only considers the columns up to swir2 (truth data's end col)
-    X = X_full.loc[:, : 'swir2']
+    # grab the raw data that we want to use (sentinel2, landsat8, or both)
+    if data == 'all':
+        X = X_full.loc[:, : 'L8_longwave_infrared2']
+        print('\n\nall', X.columns.values)
+    elif data == 'l':
+        X = X_full.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
+        print("\n\nlandsat", X.columns.values)
+    elif data == 's':
+        X = X_full.loc[:, : 'S2_swir2']
+        print('\n\nsentinel', X.columns.values)
+
     y = X_full[class_]
     return X, y
 
@@ -435,7 +444,7 @@ def get_sample(data_frame, classes, undersample=True, normalize=True):
             X_true = data_frame[data_frame[class_]
                                 == True].sample(len(X_false))
 
-        X, y = get_training_set(X_true, X_false, class_)
+        X, y = get_training_set(data, X_true, X_false, class_)
 
         if normalize:
             return normalizeData(X), y
@@ -450,7 +459,7 @@ def get_sample(data_frame, classes, undersample=True, normalize=True):
         else:
             X_false = oversample(X_false, X_true)
 
-        X, y = get_training_set(X_true, X_false, class_)
+        X, y = get_training_set(data, X_true, X_false, class_)
 
         if normalize:
             return normalizeData(X), y
