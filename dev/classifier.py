@@ -323,13 +323,12 @@ def get_training_set(data, X_true, X_false, class_):
     # grab the raw data that we want to use (sentinel2, landsat8, or both)
     if data == 'all':
         X = X_full.loc[:, : 'L8_longwave_infrared2']
-        print('\n\nall', X.columns.values)
+
     elif data == 'l':
         X = X_full.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
-        print("\n\nlandsat", X.columns.values)
+
     elif data == 's':
         X = X_full.loc[:, : 'S2_swir2']
-        print('\n\nsentinel', X.columns.values)
 
     y = X_full[class_]
     return X, y
