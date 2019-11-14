@@ -28,6 +28,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 
+# these guys can be read off the input data variable:
 lines = 401 # y dimension
 samples = 410 # x dimension
 
