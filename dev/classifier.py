@@ -10,6 +10,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
 from sklearn.model_selection import train_test_split
@@ -524,6 +525,26 @@ def train(X, y):
     print("Test score: {:.3f}".format(sgd_clf.score(X_test, y_test)))
     print_classifier_metrics(y_test, y_pred)
     return sgd_clf
+
+
+def trainGB(X, y):
+    gbrt = GradientBoostingClassifier(random_state=0)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=0, test_size=0.2)
+
+    np.set_printoptions(precision=3)
+
+    print("\n\nBegin Fitting GBC\n")
+
+    gbrt = gbrt.fit(X_train, y_train)
+    y_pred = gbrt.predict(X_test)
+
+    print("Decision function:", gbrt.decision_function(X_test))
+    print("Test score: {:.3f}".format(gbrt.score(X_test, y_test)))
+    print_classifier_metrics(y_test, y_pred)
+
+    return gbrt
 
 
 """
