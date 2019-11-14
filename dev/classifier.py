@@ -1,18 +1,17 @@
+import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-import os
 import rasterio
 from rasterio import plot
 from rasterio.plot import show
 import pandas as pd
-import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import SGDClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -35,6 +34,10 @@ def get_data(fp):
 
         returns a list of file paths to .bin files
     """
+
+    if not os.path.exists(fp):
+        print("Error: couldn't find path:\n\t" + fp)
+        sys.exit(1)
 
     rasterBin = []
     for root, dirs, files in os.walk(fp, topdown=False):
