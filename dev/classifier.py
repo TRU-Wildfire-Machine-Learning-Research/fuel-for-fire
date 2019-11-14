@@ -458,7 +458,7 @@ def show_original_image(df):
     plt.savefig("original_image.png")
 
 
-def rescale(arr):
+def rescale(arr, two_percent = True):
     """
     https://stackoverflow.com/questions/48571486/converting-from-numpy-arrays-to-a-rgb-image
     """
@@ -466,20 +466,23 @@ def rescale(arr):
     arr_max = arr.max()
     scaled = (arr - arr_min) / (arr_max - arr_min)
     
-    values = copy.deepcopy(scaled)
-    values = values.reshape(np.prod(values.shape))
-    values = values.tolist()
-    values.sort()
-    npx = len(values) # number of pixels
-    if values[-1] < values[0]:
-        print('error: failed to sort')
-        sys.exit(1)
-    v_min = values[int(math.floor(float(npx)*0.02))]
-    v_max = values[int(math.floor(float(npx)*0.98))]
-    scaled -= v_min
-    rng = v_max - v_min
-    if rng > 0.:
-        scaled /= (v_max - v_min)
+    if two_percent:
+        # 2%-linear stretch transformation for hi-contrast vis
+        values = copy.deepcopy(scaled)
+        values = values.reshape(np.prod(values.shape))
+        values = values.tolist()
+        values.sort()
+        npx = len(values) # number of pixels
+        if values[-1] < values[0]:
+            print('error: failed to sort')
+            sys.exit(1)
+        v_min = values[int(math.floor(float(npx)*0.02))]
+        v_max = values[int(math.floor(float(npx)*0.98))]
+        scaled -= v_min
+        rng = v_max - v_min
+        if rng > 0.:
+            scaled /= (v_max - v_min)
+   
     return scaled
 
 def train(X, y):
