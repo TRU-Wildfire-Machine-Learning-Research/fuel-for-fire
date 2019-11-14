@@ -404,8 +404,8 @@ def plot_confusion_matrix_image(df, clf, true_val):
                 arr[x] = 15
                 # this is true negative
     arr = arr.reshape(401, 410)
-    plt.xlabel(xlabel='width (px)')
-    plt.ylabel(ylabel='height (px)')
+    plt.xlabel('width (px)')
+    plt.ylabel('height (px)')
 
     # legend_elements = [Patch(
     #     label='True Negative'), Patch(
