@@ -34,7 +34,7 @@ samples = 410 # x dimension
 def get_data(fp):
     """Assumes the filepath provided contains both
         .hdr and .bin files within the fp provided in the function
-        call. 
+        call.
 
         returns a list of file paths to .bin files
     """
@@ -54,14 +54,14 @@ def get_data(fp):
 
 
 def populate_data_frame(rasterBin, showplots=False):
-    """Receives a list of file paths to .bin files. 
-        A ground truth raster (predefined) is read, 
+    """Receives a list of file paths to .bin files.
+        A ground truth raster (predefined) is read,
         band by band, and stored in the data_frame.
-        Additional 'labeled' truth data images are 
+        Additional 'labeled' truth data images are
         read and saved to the dataframe. These values
         are also decoded to binary interpretations, and
         the binary interpretation is stored in its own
-        column. 
+        column.
 
         Showplots argument added to visualize the raw data
         and the truth data.
@@ -166,7 +166,7 @@ def populate_data_frame(rasterBin, showplots=False):
 
 def create_image_array(df, class_):
     """Generates a numpy.ndarray the same
-        size as the raw data (statically defined) 
+        size as the raw data (statically defined)
         that is used to visualize a binary representation
         of truth data.
 
@@ -211,7 +211,7 @@ def show_truth_data_subplot(df, window_title="Truth Data"):
 
 def get_training_set(X_true, X_false, class_):
     """Concatenates true pixels and false pixels into a fingle data to
-        create a dataset. 
+        create a dataset.
 
         Returns X, a pandas dataframe, and y, a pandas series
     """
@@ -284,7 +284,7 @@ def create_union_column(data_frame, classes, dictionary):
         columns of data. This augments the passed dataframe.
 
         returns a pandas dataframe with a new column, the string
-        that corresponds to that columns name in the dataframe, 
+        that corresponds to that columns name in the dataframe,
         and a class dictionary with the new class added to the
         dictionary.
 
@@ -434,7 +434,7 @@ def plot_confusion_matrix_image(df, clf, true_val):
     # put those patched as legend-handles into the legend
     # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     print('+w ' + true_val + '.png')
-    plt.savefig(true_val + '.png')   
+    plt.savefig(true_val + '.png')
 
 
 def show_original_image(df):
@@ -465,7 +465,7 @@ def rescale(arr, two_percent = True):
     arr_min = arr.min()
     arr_max = arr.max()
     scaled = (arr - arr_min) / (arr_max - arr_min)
-    
+
     if two_percent:
         # 2%-linear stretch transformation for hi-contrast vis
         values = copy.deepcopy(scaled)
@@ -482,7 +482,7 @@ def rescale(arr, two_percent = True):
         rng = v_max - v_min
         if rng > 0.:
             scaled /= (v_max - v_min)
-   
+
     return scaled
 
 def train(X, y):
