@@ -174,7 +174,8 @@ def populate_data_frame(rasterBin, showplots=False):
             data_frame['exposed_bool'] = data_frame['exposed_val'] != 0.0
 
     if showplots:
-        show_original_image(data_frame)
+        show_original_image(data_frame, 'l')
+        show_original_image(data_frame, 's')
         show_truth_data_subplot(data_frame)
     return data_frame
 
@@ -244,60 +245,6 @@ def show_truth_data_subplot(df, window_title="Truth Data"):
     plt.savefig("truth_data.png")  # show()
 
 
-def plot_confusion_matrix_image(df, clf, true_val, data):
-    """UNDER DEVELOPMENT
-
-    """
-    if data == 'all':
-        raw_data = df.loc[:, : 'L8_longwave_infrared2']
-
-    elif data == 's':
-        raw_data = df.loc[:, : 'S2_swir2']
-
-    elif data == 'l':
-        raw_data = df.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
-
-    y_pred = clf.predict(raw_data)  # predict on all the data
-    y_true = df[true_val + "_bool"]  # store the true values
-
-    arr = np.zeros([164410], dtype='int')
-
-    for x in range(len(y_pred)):  # iterate the length of the arrays
-        if y_true[x]:
-            if y_pred[x]:
-                arr[x] = 0
-                # this is true positive
-            else:
-                arr[x] = 5
-                # This is false positive
-        else:
-            if y_pred[x]:
-                arr[x] = 10
-                # this is false negative
-            else:
-                arr[x] = 15
-                # this is true negative
-    arr = arr.reshape(401, 410)
-    plt.xlabel(xlabel='width (px)')
-    plt.ylabel(ylabel='height (px)')
-
-    # legend_elements = [Patch(
-    #     label='True Negative'), Patch(
-    #     label='False Positive')]
-
-    # Create the figure
-    # fig, ax = plt.subplots()
-    # ax.legend(handles=legend_elements)
-    plt.imshow(arr)
-    # colors = [im.cmap(im.value) for value in arr]
-
-    # patches = [Patch(color=colors[i], label="Level {l}".format(l = arr[i])) for i in range(len(arr))]
-    # put those patched as legend-handles into the legend
-    # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-    plt.show()
-
-
 def show_original_image(df, data):
     """builds an array of the RGB values of the
         truth image, scaling the original values
@@ -306,19 +253,19 @@ def show_original_image(df, data):
 
     """
 
-    arr = np.zeros((401, 410, 3))
+    arr = np.zeros((lines, samples, 3))
 
     if data == 's':
 
-        blue = rescale(df.S2_blue.values.reshape(401, 410))
-        red = rescale(df.S2_red.values.reshape(401, 410))
-        green = rescale(df.S2_green.values.reshape(401, 410))
+        blue = rescale(df.S2_blue.values.reshape(lines, samples))
+        red = rescale(df.S2_red.values.reshape(lines, samples))
+        green = rescale(df.S2_green.values.reshape(lines, samples))
 
     elif data == 'l':
 
-        blue = rescale(df.L8_blue.values.reshape(401, 410))
-        red = rescale(df.L8_red.values.reshape(401, 410))
-        green = rescale(df.L8_green.values.reshape(401, 410))
+        blue = rescale(df.L8_blue.values.reshape(lines, samples))
+        red = rescale(df.L8_red.values.reshape(lines, samples))
+        green = rescale(df.L8_green.values.reshape(lines, samples))
 
     else:
         print("Specify an image to show in show_original_image(df, __) ('s' for sentinel2 or 'l' for landsat8)")
@@ -327,15 +274,11 @@ def show_original_image(df, data):
     arr[:, :, 1] = green
     arr[:, :, 2] = blue
 
+    plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
     plt.imshow(arr)
-    plt.show()
-
-
-def rescale(arr):
-    arr_min = arr.min()
-    arr_max = arr.max()
-
-    return (arr - arr_min) / (arr_max - arr_min)
+    plt.tight_layout()
+    print("+w original_image.png")
+    plt.savefig("original_image" + "_" + data + ".png")
 
 
 def get_training_set(data, X_true, X_false, class_):
@@ -517,18 +460,19 @@ def plot_confusion_matrix_image(df, clf, true_val, data='all'):
     """
 
     # grab the test data (includes data the system was trained on)
-    X = df.loc[:, : 'L8_longwave_infrared2']
-
-    if data == 'l':
-        X = X.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
+    if data == 'all':
+        raw_data = df.loc[:, : 'L8_longwave_infrared2']
 
     elif data == 's':
-        X = X.loc[:, : 'S2_swir2']
+        raw_data = df.loc[:, : 'S2_swir2']
 
-    y_pred = clf.predict(X)  # predict on all the data
+    elif data == 'l':
+        raw_data = df.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
+
+    y_pred = clf.predict(raw_data)  # predict on all the data
     y_true = df[true_val + "_bool"]  # store the true values
 
-    arr = np.zeros([164410], dtype='int')
+    arr = np.zeros([lines * samples], dtype='int')
 
     for x in range(len(y_pred)):  # iterate the length of the arrays
         if y_true[x]:
@@ -567,27 +511,6 @@ def plot_confusion_matrix_image(df, clf, true_val, data='all'):
     # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     print('+w ' + true_val + '.png')
     plt.savefig(true_val + '.png')
-
-
-def show_original_image(df):
-    """builds an array of the RGB values of the
-        truth image, scaling the original values
-        between 0 - 1 (matplotlib req.) and
-        displays that image in a plot.
-
-    """
-    blue = rescale(df.blue.values.reshape(lines, samples))
-    red = rescale(df.red.values.reshape(lines, samples))
-    green = rescale(df.green.values.reshape(lines, samples))
-    arr = np.zeros((lines, samples, 3))
-    arr[:, :, 0] = red
-    arr[:, :, 1] = green
-    arr[:, :, 2] = blue
-    plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
-    plt.imshow(arr)
-    plt.tight_layout()
-    print("+w original_image.png")
-    plt.savefig("original_image.png")
 
 
 def rescale(arr, two_percent=True):
@@ -671,7 +594,7 @@ def trainGB(X, y):
 
 if __name__ == "__main__":
 
-    data_frame = populate_data_frame(get_data("../data/"), showplots=False)
+    data_frame = populate_data_frame(get_data("../data/"), showplots=True)
 
     class_dictionary = create_class_dictionary(data_frame)
     X, y = get_sample(data_frame, "water", data='all',
