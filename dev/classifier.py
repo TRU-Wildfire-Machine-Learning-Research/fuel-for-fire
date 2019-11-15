@@ -1,18 +1,19 @@
+import os
+import sys
+import math
+import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-import os
 import rasterio
 from rasterio import plot
 from rasterio.plot import show
 import pandas as pd
-import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import SGDClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -27,14 +28,21 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 
+# these guys can be read off the input data variable:
+lines = 401 # y dimension
+samples = 410 # x dimension
 
 def get_data(fp):
     """Assumes the filepath provided contains both
         .hdr and .bin files within the fp provided in the function
-        call. 
+        call.
 
         returns a list of file paths to .bin files
     """
+
+    if not os.path.exists(fp):
+        print("Error: couldn't find path:\n\t" + fp)
+        sys.exit(1)
 
     rasterBin = []
     for root, dirs, files in os.walk(fp, topdown=False):
@@ -47,14 +55,14 @@ def get_data(fp):
 
 
 def populate_data_frame(rasterBin, showplots=False):
-    """Receives a list of file paths to .bin files. 
-        A ground truth raster (predefined) is read, 
+    """Receives a list of file paths to .bin files.
+        A ground truth raster (predefined) is read,
         band by band, and stored in the data_frame.
-        Additional 'labeled' truth data images are 
+        Additional 'labeled' truth data images are
         read and saved to the dataframe. These values
         are also decoded to binary interpretations, and
         the binary interpretation is stored in its own
-        column. 
+        column.
 
         Showplots argument added to visualize the raw data
         and the truth data.
@@ -159,7 +167,7 @@ def populate_data_frame(rasterBin, showplots=False):
 
 def create_image_array(df, class_):
     """Generates a numpy.ndarray the same
-        size as the raw data (statically defined) 
+        size as the raw data (statically defined)
         that is used to visualize a binary representation
         of truth data.
 
@@ -170,7 +178,7 @@ def create_image_array(df, class_):
     true_df = df[class_bool].loc[df[class_bool] == True]
     for idx in true_df.index:
         arr[idx] = 0
-        rs_arr = arr.reshape(401, 410)
+        rs_arr = arr.reshape(lines, samples) # 401, 410)
     return rs_arr
 
 
@@ -195,13 +203,16 @@ def show_truth_data_subplot(df, window_title="Truth Data"):
             col = 0
             row = row + 1
 
+    # make this plot a bit bigger
+    plt.gcf().set_size_inches(14, 14. * float(lines) / float(samples))
     plt.tight_layout()
-    plt.show()
+    print("+w truth_data.png")
+    plt.savefig("truth_data.png") #show()
 
 
 def get_training_set(X_true, X_false, class_):
     """Concatenates true pixels and false pixels into a fingle data to
-        create a dataset. 
+        create a dataset.
 
         Returns X, a pandas dataframe, and y, a pandas series
     """
@@ -274,7 +285,7 @@ def create_union_column(data_frame, classes, dictionary):
         columns of data. This augments the passed dataframe.
 
         returns a pandas dataframe with a new column, the string
-        that corresponds to that columns name in the dataframe, 
+        that corresponds to that columns name in the dataframe,
         and a class dictionary with the new class added to the
         dictionary.
 
@@ -359,14 +370,17 @@ def print_classifier_metrics(y_test, y_pred):
     cm = confusion_matrix(y_test, y_pred)
     truenegative, falsepositive, falsenegative, truepositive = confusion_matrix(
         y_test, y_pred).ravel()
-    print("Confusion Matrix\n")
+    print("Confusion Matrix")
+    print("[tn fp]")
+    print("[fn tp]\n")
     for arr in cm:
         print(arr)
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     print("")
     for arr in cm:
         print(arr)
-    print("\nTrue Negative", truenegative)  # False class guessed correctly
+    print("")
+    print("True Negative", truenegative)  # False class guessed correctly
     print("True Positive", truepositive)  # True class guessed correctly
     print("False Negative", falsenegative)  # False class guessed as true class
     print("False Positive", falsepositive)  # True class guessed as false class
@@ -400,9 +414,9 @@ def plot_confusion_matrix_image(df, clf, true_val):
             else:
                 arr[x] = 15
                 # this is true negative
-    arr = arr.reshape(401, 410)
-    plt.xlabel(xlabel='width (px)')
-    plt.ylabel(ylabel='height (px)')
+    arr = arr.reshape(lines, samples) #401, 410)
+    plt.xlabel('width (px)')
+    plt.ylabel('height (px)')
 
     # legend_elements = [Patch(
     #     label='True Negative'), Patch(
@@ -411,14 +425,17 @@ def plot_confusion_matrix_image(df, clf, true_val):
     # Create the figure
     # fig, ax = plt.subplots()
     # ax.legend(handles=legend_elements)
+    plt.clf()
+    plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
     plt.imshow(arr)
+    plt.tight_layout()
     # colors = [im.cmap(im.value) for value in arr]
 
     # patches = [Patch(color=colors[i], label="Level {l}".format(l = arr[i])) for i in range(len(arr))]
     # put those patched as legend-handles into the legend
     # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-    plt.show()
+    print('+w ' + true_val + '.png')
+    plt.savefig(true_val + '.png')
 
 
 def show_original_image(df):
@@ -428,32 +445,53 @@ def show_original_image(df):
         displays that image in a plot.
 
     """
-    blue = rescale(df.blue.values.reshape(401, 410))
-    red = rescale(df.red.values.reshape(401, 410))
-    green = rescale(df.green.values.reshape(401, 410))
-    arr = np.zeros((401, 410, 3))
+    blue = rescale(df.blue.values.reshape(lines, samples))
+    red = rescale(df.red.values.reshape(lines, samples))
+    green = rescale(df.green.values.reshape(lines, samples))
+    arr = np.zeros((lines, samples, 3))
     arr[:, :, 0] = red
     arr[:, :, 1] = green
     arr[:, :, 2] = blue
+    plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
     plt.imshow(arr)
-    plt.show()
+    plt.tight_layout()
+    print("+w original_image.png")
+    plt.savefig("original_image.png")
 
 
-def rescale(arr):
+def rescale(arr, two_percent = True):
     """
     https://stackoverflow.com/questions/48571486/converting-from-numpy-arrays-to-a-rgb-image
     """
     arr_min = arr.min()
     arr_max = arr.max()
-    return (arr - arr_min) / (arr_max - arr_min)
+    scaled = (arr - arr_min) / (arr_max - arr_min)
 
+    if two_percent:
+        # 2%-linear stretch transformation for hi-contrast vis
+        values = copy.deepcopy(scaled)
+        values = values.reshape(np.prod(values.shape))
+        values = values.tolist()
+        values.sort()
+        npx = len(values) # number of pixels
+        if values[-1] < values[0]:
+            print('error: failed to sort')
+            sys.exit(1)
+        v_min = values[int(math.floor(float(npx)*0.02))]
+        v_max = values[int(math.floor(float(npx)*0.98))]
+        scaled -= v_min
+        rng = v_max - v_min
+        if rng > 0.:
+            scaled /= (v_max - v_min)
+
+    return scaled
 
 def train(X, y):
     """sklearn SGDClassifier
 
     """
     sgd_clf = SGDClassifier(
-        random_state=42, verbose=False)
+        random_state=42, verbose=False, max_iter=1000, tol=1.e-3)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=0, test_size=0.2)
