@@ -311,7 +311,7 @@ def show_original_image(df, data):
         green = rescale(df.L8_green.values.reshape(401, 410))
 
     else:
-        print("Specify an image to show ('s' for sentinel2 or 'l' for landsat8)")
+        print("Specify an image to show in show_original_image(df, __) ('s' for sentinel2 or 'l' for landsat8)")
 
     arr[:, :, 0] = red
     arr[:, :, 1] = green
