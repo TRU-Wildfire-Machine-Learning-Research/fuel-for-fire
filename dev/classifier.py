@@ -499,8 +499,7 @@ def print_classifier_metrics(y_test, y_pred):
 
     """
     cm = confusion_matrix(y_test, y_pred)
-    truenegative, falsepositive, falsenegative, truepositive = confusion_matrix(
-        y_test, y_pred).ravel()
+
     print("Confusion Matrix")
     print("[tn fp]")
     print("[fn tp]\n")
@@ -517,7 +516,7 @@ def print_classifier_metrics(y_test, y_pred):
     print("False Positive", falsepositive)  # True class guessed as false class
 
 
-def plot_confusion_matrix_image(df, clf, , data='all'):
+def plot_confusion_matrix_image(df, clf, true_val):
     """UNDER DEVELOPMENT
 
     """
