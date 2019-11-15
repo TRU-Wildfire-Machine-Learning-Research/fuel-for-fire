@@ -281,7 +281,7 @@ def show_original_image(df, data):
     plt.savefig("original_image" + "_" + data + ".png")
 
 
-def get_training_set(data, X_true, X_false, class_):
+def get_training_set(data, X_true, X_false, class_, image_type='all'):
     """Concatenates true pixels and false pixels into a single dataframe to
         create a dataset.
 
@@ -292,13 +292,13 @@ def get_training_set(data, X_true, X_false, class_):
     X_full = pd.concat(os_list)
 
     # grab the raw data that we want to use (sentinel2, landsat8, or both)
-    if data == 'all':
+    if image_type == 'all':
         X = X_full.loc[:, : 'L8_longwave_infrared2']
 
-    elif data == 'l':
+    elif image_type == 'l':
         X = X_full.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
 
-    elif data == 's':
+    elif image_type == 's':
         X = X_full.loc[:, : 'S2_swir2']
 
     y = X_full[class_]
@@ -381,7 +381,7 @@ def true_sample_is_smaller(t, f):
     return len(t) < len(f)
 
 
-def get_sample(data_frame, classes, data='all', undersample=True, normalize=True):
+def get_sample(data_frame, classes, image_type='all', undersample=True, normalize=True):
     """retrieves a class balanced sample of data from the dataframe.
         That is, false class, balanced with true class, with options to
         normalize the feature data, or oversample.
@@ -414,7 +414,8 @@ def get_sample(data_frame, classes, data='all', undersample=True, normalize=True
             X_true = data_frame[data_frame[class_]
                                 == True].sample(len(X_false))
 
-        X, y = get_training_set(data, X_true, X_false, class_)
+        X, y = get_training_set(
+            data_frame, X_true, X_false, class_, image_type)
 
         if normalize:
             return normalizeData(X), y
@@ -429,7 +430,8 @@ def get_sample(data_frame, classes, data='all', undersample=True, normalize=True
         else:
             X_false = oversample(X_false, X_true)
 
-        X, y = get_training_set(data, X_true, X_false, class_)
+        X, y = get_training_set(
+            data_frame, X_true, X_false, class_, image_type)
 
         if normalize:
             return normalizeData(X), y
@@ -454,22 +456,28 @@ def print_classifier_metrics(y_test, y_pred):
         print(arr)
 
 
-def plot_confusion_matrix_image(df, clf, true_val, data='all'):
+def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
     """UNDER DEVELOPMENT
 
     """
 
     # grab the test data (includes data the system was trained on)
-    if data == 'all':
+
+    if image_type == 'all':
         raw_data = df.loc[:, : 'L8_longwave_infrared2']
 
-    elif data == 's':
+    elif image_type == 's':
         raw_data = df.loc[:, : 'S2_swir2']
 
-    elif data == 'l':
+    elif image_type == 'l':
         raw_data = df.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
+    try:
+        y_pred = clf.predict(raw_data)  # predict on all the data
+    except:
+        print("Error: It's likely that you are trying to plot using an image type that isn't the same as the image type in the classifier")
+        print("Ensure that your image_type argument in get_sample() is the same as your image_type argument in plot_confusion_matrix_image()")
+        sys.exit()
 
-    y_pred = clf.predict(raw_data)  # predict on all the data
     y_true = df[true_val + "_bool"]  # store the true values
 
     arr = np.zeros([lines * samples], dtype='int')
@@ -489,26 +497,15 @@ def plot_confusion_matrix_image(df, clf, true_val, data='all'):
             else:
                 arr[x] = 15
                 # this is true negative
-    arr = arr.reshape(lines, samples)  # 401, 410)
+    arr = arr.reshape(lines, samples)  # 401, 410
     plt.xlabel('width (px)')
     plt.ylabel('height (px)')
 
-    # legend_elements = [Patch(
-    #     label='True Negative'), Patch(
-    #     label='False Positive')]
-
-    # Create the figure
-    # fig, ax = plt.subplots()
-    # ax.legend(handles=legend_elements)
     plt.clf()
     plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
     plt.imshow(arr)
     plt.tight_layout()
-    # colors = [im.cmap(im.value) for value in arr]
 
-    # patches = [Patch(color=colors[i], label="Level {l}".format(l = arr[i])) for i in range(len(arr))]
-    # put those patched as legend-handles into the legend
-    # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     print('+w ' + true_val + '.png')
     plt.savefig(true_val + '.png')
 
@@ -559,9 +556,11 @@ def train(X, y):
     y_pred = sgd_clf.predict(X_test)
 
     print("\n{:*^30}\n".format("Training complete"))
-    print("Test score: {:.3f}".format(sgd_clf.score(X_test, y_test)))
+    score = "{:.3f}".format(sgd_clf.score(X_test, y_test))
+    print("Test score:", score)
+
     print_classifier_metrics(y_test, y_pred)
-    return sgd_clf
+    return sgd_clf, score
 
 
 def trainGB(X, y):
@@ -577,11 +576,39 @@ def trainGB(X, y):
     gbrt = gbrt.fit(X_train, y_train)
     y_pred = gbrt.predict(X_test)
 
-    print("Decision function:", gbrt.decision_function(X_test))
+    score = "{:.3f}".format(gbrt.score(X_test, y_test))
     print("Test score: {:.3f}".format(gbrt.score(X_test, y_test)))
     print_classifier_metrics(y_test, y_pred)
 
     return gbrt
+
+
+def run_the_gambit(df):
+    """Rudimentary test run of a SGD classifier with all of the possible
+        iterations with the given functionality. Pass a data_frame, the
+        script will save a png representation of the model with the highest
+        performace on the raw data.
+
+    """
+    it = ['all', 'l', 's']
+    us = [True, False]
+    nm = [True, False]
+    class_dictionary = create_class_dictionary(df)
+
+    for key in class_dictionary.keys():  # for each class
+        max_score = 0.0
+        for s in us:  # for each type of sampling
+            for n in nm:  # for normalizing or not
+                for i in it:  # for each image type
+                    X, y = get_sample(df, key, image_type=i,
+                                      undersample=s, normalize=n)
+                    clf, score = train(X, y)
+
+                    # Save the top scored plot
+                    if max_score < float(score):
+                        max_score = float(score)
+                        plot_confusion_matrix_image(
+                            df, clf, key, image_type=i)
 
 
 """
@@ -594,10 +621,5 @@ def trainGB(X, y):
 
 if __name__ == "__main__":
 
-    data_frame = populate_data_frame(get_data("../data/"), showplots=True)
-
-    class_dictionary = create_class_dictionary(data_frame)
-    X, y = get_sample(data_frame, "water", data='all',
-                      undersample=False, normalize=True)
-    clf = train(X, y)
-    plot_confusion_matrix_image(data_frame, clf, "water")
+    data_frame = populate_data_frame(get_data("../data/"), showplots=False)
+    run_the_gambit(data_frame)
