@@ -560,7 +560,11 @@ if __name__ == "__main__":
     data_frame = populate_data_frame(get_data("../data/"), showplots=False)
 
     class_dictionary = create_class_dictionary(data_frame)
-    X, y = get_sample(data_frame, "water", data=t,
-                      undersample=s, normalize=True)
+    X, y = get_sample(data_frame, "water", data='all',
+                      undersample=False, normalize=True)
     clf = train(X, y)
-    plot_confusion_matrix_image(data_frame, clf, "water", data=t)
+    plot_confusion_matrix_image(data_frame, clf, "water", data='all')
+
+    gbrt = trainGB(X, y)
+
+    plot_confusion_matrix_image(data_frame, gbrt, "water", data='all')
