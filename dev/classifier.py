@@ -509,22 +509,23 @@ def print_classifier_metrics(y_test, y_pred):
     print("")
     for arr in cm:
         print(arr)
-    print("")
-    print("True Negative", truenegative)  # False class guessed correctly
-    print("True Positive", truepositive)  # True class guessed correctly
-    print("False Negative", falsenegative)  # False class guessed as true class
-    print("False Positive", falsepositive)  # True class guessed as false class
 
 
-def plot_confusion_matrix_image(df, clf, true_val):
+def plot_confusion_matrix_image(df, clf, true_val, data='all'):
     """UNDER DEVELOPMENT
 
     """
 
     # grab the test data (includes data the system was trained on)
-    all_data = df.loc[:, : 'swir2']
+    X = df.loc[:, : 'L8_longwave_infrared2']
 
-    y_pred = clf.predict(all_data)  # predict on all the data
+    if data == 'l':
+        X = X.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
+
+    elif data == 's':
+        X = X.loc[:, : 'S2_swir2']
+
+    y_pred = clf.predict(X)  # predict on all the data
     y_true = df[true_val + "_bool"]  # store the true values
 
     arr = np.zeros([164410], dtype='int')
@@ -676,8 +677,4 @@ if __name__ == "__main__":
     X, y = get_sample(data_frame, "water", data='all',
                       undersample=False, normalize=True)
     clf = train(X, y)
-    plot_confusion_matrix_image(data_frame, clf, "water", data='all')
-
-    gbrt = trainGB(X, y)
-
-    plot_confusion_matrix_image(data_frame, gbrt, "water", data='all')
+    plot_confusion_matrix_image(data_frame, clf, "water")
