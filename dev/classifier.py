@@ -544,15 +544,12 @@ def rescale(arr, two_percent=True):
     return scaled
 
 
-def train(X, y):
+def train(X_train, X_test, y_train, y_test):
     """sklearn SGDClassifier
 
     """
     sgd_clf = SGDClassifier(
         random_state=42, verbose=False, max_iter=1000, tol=1.e-3)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, random_state=0, test_size=0.2)
 
     np.set_printoptions(precision=3)
 
