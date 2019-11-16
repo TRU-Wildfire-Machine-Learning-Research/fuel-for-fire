@@ -586,11 +586,88 @@ def trainGB(X, y):
     return gbrt, score
 
 
-def run_the_gambit(df):
+def fold(df, class_, n_folds=5, normalize=True):
+    """
+    """
+    cd = create_class_dictionary(data_frame)
+
+    # Retrieve the original data
+    class_ = cd[class_]
+    X_true = data_frame[data_frame[class_] == True].copy()
+    X_false = data_frame[data_frame[class_]
+                         == False].copy()
+
+    # Decide which class needs to take a subset
+    if len(X_true) < len(X_false):
+        X_false = X_false.sample(len(X_true))
+    else:
+        X_true = X_true.sample(len(X_false))
+
+    # size
+    size = len(X_true) * 2
+    fold_size = int(math.floor(size/n_folds))
+    half_fold_size = int(math.floor(fold_size/2))
+
+    # Shuffle the data
+    X_true.sample(frac=1)
+    X_false.sample(frac=1)
+
+    folds = list()
+    for f in range(n_folds):
+        X_tsample = X_true.sample(half_fold_size)
+        X_fsample = X_false.sample(half_fold_size)
+        X_true.drop(index=X_tsample.index.values.tolist(), inplace=True)
+        X_false.drop(index=X_fsample.index.values.tolist(), inplace=True)
+        print("f sample:", len(X_fsample))
+        print("t sample:", len(X_tsample))
+        fold = concatenate_dataframes(X_tsample, X_fsample)
+        fold.sample(frac=1) # shuffle fold
+        folds.append(fold)
+
+    # Append the left over data from using the floor method
+    fold = concatenate_dataframes(X_true, X_false)
+    folds[0] = folds[0].append(fold)
+
+    return folds
+
+def get_x_data(df, image_type):
+    if image_type == "all":
+        X = df.loc[: ,  : "L8_longwave_infrared2" ]
+    elif image_type == "s":
+        X = df.loc[: ,  : "S2_swir2" ]
+    elif image_type == "l":
+        X = df.loc[: ,  "L8_coastal_aerosol" : "L8_longwave_infrared2" ]
+
+    return X
+
+def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all"):
+    cd = create_class_dictionary(fd[0])
+
+    train_is_empty = True
+
+    for f in range(len(fd)):
+        if f != test_data_idx:
+            if train_is_empty:
+                X_train = get_x_data(fd[test_data_idx], image_type)
+                y_train = fd[test_data_idx][cd[class_]]
+                train_is_empty = False
+            else:
+                X_train = concatenate_dataframes(get_x_data(fd[test_data_idx],image_type), X_train)
+                y_train = concatenate_dataframes(fd[test_data_idx][cd[class_]], y_train)
+
+        else:
+            X_test = get_x_data(fd[test_data_idx], image_type)
+            y_test = fd[test_data_idx][cd[class_]]
+
+    return X_train, X_test, y_train, y_test
+
+def train_all_variations(df):
     """Rudimentary test run of a SGD classifier with all of the possible
         iterations with the given functionality. Pass a data_frame, the
-        script will save a png representation of the model with the highest
-        performace on the raw data.
+        script will save a png representation of each class with the highest
+        performace on the raw data. Variations include: Training on Sentinel2
+        data, Landsat8 data, or both at the same time; Normalizing the data or
+        not normalizing; Undersampling or oversampling; and each of the 9 classes.
 
     """
     it = ['all', 'l', 's']
