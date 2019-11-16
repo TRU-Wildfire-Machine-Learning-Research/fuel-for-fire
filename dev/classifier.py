@@ -511,7 +511,7 @@ def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
 
 def rescale(arr, two_percent=True):
     """
-    https://stackoverflow.com/questions/48571486/converting-from-numpy-arrays-to-a-rgb-image
+    
     """
     arr_min = arr.min()
     arr_max = arr.max()
