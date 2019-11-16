@@ -598,22 +598,26 @@ def run_the_gambit(df):
     nm = [True, False]
     class_dictionary = create_class_dictionary(df)
 
-    for key in class_dictionary.keys():  # for each class
+    for class_ in class_dictionary.keys():  # for each class
         max_score = 0.0
         for s in us:  # for each type of sampling
             for n in nm:  # for normalizing or not
                 for i in it:  # for each image type
-                    X, y = get_sample(df, key, image_type=i,
+                    X, y = get_sample(df, class_, image_type=i,
                                       undersample=s, normalize=n)
+                    print("")
+                    print("{:*^50}".format(""))
+                    print("{:<40}".format("Class: " + class_))
+                    print("{:<40}".format("Undersampling:" + str(s)))
+                    print("{:<40}".format("Normalize: " + str(n)))
+                    print("{:<40}".format("Image_Type: " + i))
                     clf, score = train(X, y)
 
                     # Save the top scored plot
                     if max_score < float(score):
                         max_score = float(score)
-                        print("New top model")
-                        print(clf, key, s, n, i)
                         plot_confusion_matrix_image(
-                            df, clf, key, image_type=i)
+                            df, clf, class_, image_type=i)
 
 
 """
