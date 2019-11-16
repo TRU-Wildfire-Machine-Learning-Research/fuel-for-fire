@@ -577,10 +577,10 @@ def trainGB(X, y):
     y_pred = gbrt.predict(X_test)
 
     score = "{:.3f}".format(gbrt.score(X_test, y_test))
-    print("Test score: {:.3f}".format(gbrt.score(X_test, y_test)))
+    print("Test score:", score)
     print_classifier_metrics(y_test, y_pred)
 
-    return gbrt
+    return gbrt, score
 
 
 def run_the_gambit(df):
@@ -607,6 +607,8 @@ def run_the_gambit(df):
                     # Save the top scored plot
                     if max_score < float(score):
                         max_score = float(score)
+                        print("New top model")
+                        print(clf, key, s, n, i)
                         plot_confusion_matrix_image(
                             df, clf, key, image_type=i)
 
