@@ -468,15 +468,8 @@ def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
     """
 
     # grab the test data (includes data the system was trained on)
+    raw_data = get_x_data(df, image_type)
 
-    if image_type == 'all':
-        raw_data = df.loc[:, : 'L8_longwave_infrared2']
-
-    elif image_type == 's':
-        raw_data = df.loc[:, : 'S2_swir2']
-
-    elif image_type == 'l':
-        raw_data = df.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
     try:
         y_pred = clf.predict(raw_data)  # predict on all the data
     except:
