@@ -280,17 +280,20 @@ def show_original_image(df, data):
     print("+w original_image.png")
     plt.savefig("original_image" + "_" + data + ".png")
 
+def get_full_training_set(X_true, X_false):
 
+    os_list = [X_true, X_false]
+
+    X_full = pd.concat(os_list)
+    return X_full
 def get_training_set(data, X_true, X_false, class_, image_type='all'):
     """Concatenates true pixels and false pixels into a single dataframe to
         create a dataset.
 
         Returns X, a pandas dataframe, and y, a pandas series
     """
-    os_list = [X_true, X_false]
-
-    X_full = pd.concat(os_list)
-
+    X_full = get_full_training_set(X_true, X_false)
+    
     # grab the raw data that we want to use (sentinel2, landsat8, or both)
     if image_type == 'all':
         X = X_full.loc[:, : 'L8_longwave_infrared2']
