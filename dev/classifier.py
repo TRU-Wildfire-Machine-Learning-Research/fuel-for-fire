@@ -708,4 +708,22 @@ def train_all_variations(df):
 if __name__ == "__main__":
 
     data_frame = populate_data_frame(get_data("../data/"), showplots=False)
-    run_the_gambit(data_frame)
+    folded_data = fold(data_frame, "water")
+
+    total_score = 0.0
+    for idx in range(len(folded_data)):
+        print(folded_data[idx].value_counts())
+        X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, "clearcut")
+        print(y_test.value_counts())
+        #clf, score = train(X_train, X_test, y_train, y_test)
+        #total_score = total_score + float(score)
+
+    #mean_score = "{:.3f}".format(total_score/len(folded_data))
+    #print("Mean Average:", mean_score)
+
+    # create_class_dictionary(data_frame)
+    # X, y = get_sample(data_frame, "water", image_type='l' undersample=False, normalize=True)
+    # X, y = get_sample(data_frame, ["water", "river"], image_type='all' undersample=False, normalize=True)
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.2)
+    # check_intersection_column(X_full, "water", "river")
+    # train_all_variations(data_frame)
