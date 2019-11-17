@@ -11,22 +11,15 @@ from rasterio import plot
 from rasterio.plot import show
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix
-from sklearn.utils.multiclass import unique_labels
 from sklearn.linear_model import SGDClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 
