@@ -637,13 +637,17 @@ def get_x_data(df, image_type):
 
     return X
 
-def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all"):
+def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all", normalize=False):
     cd = create_class_dictionary(fd[0])
 
     train_is_empty = True
 
     for f in range(len(fd)):
-        if f != test_data_idx:
+        if f == test_data_idx: # This is our test set
+            X_test = get_x_data(fd[test_data_idx], image_type)
+            y_test = fd[test_data_idx][cd[class_]]
+
+        else:
             if train_is_empty:
                 X_train = get_x_data(fd[test_data_idx], image_type)
                 y_train = fd[test_data_idx][cd[class_]]
@@ -651,10 +655,9 @@ def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all"):
             else:
                 X_train = concatenate_dataframes(get_x_data(fd[test_data_idx],image_type), X_train)
                 y_train = concatenate_dataframes(fd[test_data_idx][cd[class_]], y_train)
-
-        else:
-            X_test = get_x_data(fd[test_data_idx], image_type)
-            y_test = fd[test_data_idx][cd[class_]]
+    if normalize:
+        X_train = normalizeData(X_train)
+        X_test = normalizeData(X_test)
 
     return X_train, X_test, y_train, y_test
 
