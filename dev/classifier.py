@@ -630,7 +630,11 @@ def calculate_mean_metrics(cm_list, n_folds, total_score):
     TPstr = "{:.3f}".format(TP/n_folds)
 
     mean_score = "{:.3f}".format(total_score/n_folds)
-
+    print("TN:", TNstr)
+    print("FP:", FPstr)
+    print("FN:", FNstr)
+    print("TP:", TPstr)
+    print("MeanScore:", mean_score)
     return TNstr, FPstr, FNstr, TPstr, mean_score
 
 
@@ -720,7 +724,7 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all', normalize=Tru
     total_score = 0
 
     for idx in range(len(folded_data)):
-        X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, class_, image_type=i, normalize=n)
+        X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, class_, image_type=image_type, normalize=normalize)
         clf, score, cm = train(X_train, X_test, y_train, y_test)
 
         cm_list.append(cm)
@@ -769,8 +773,9 @@ if __name__ == "__main__":
 
     data_frame = populate_data_frame(get_data("../data/"), showplots=False)
 
-    train_all_variations_folded(data_frame)
-
+    # train_all_variations_folded(data_frame)
+    folded_data = fold(data_frame, "water", n_folds=10)
+    TN, FP, FN, TP, mean_score = train_folded(folded_data, "water", n_folds=5, image_type='all', normalize=True)
 
     # create_class_dictionary(data_frame)
     # X, y = get_sample(data_frame, "water", image_type='l' undersample=False, normalize=True)
