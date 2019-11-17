@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import copy
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
@@ -505,9 +506,11 @@ def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
     plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
     plt.imshow(arr)
     plt.tight_layout()
+    t = datetime.datetime.now().time()
+    impath =  true_val + str(t) + '.png'
+    print('+w ' + impath)
+    plt.savefig(impath)
 
-    print('+w ' + true_val + '.png')
-    plt.savefig(true_val + '.png')
 
 
 def rescale(arr, two_percent=True):
