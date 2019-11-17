@@ -310,7 +310,7 @@ def get_training_set(data, X_true, X_false, class_, image_type='all'):
     return X, y
 
 
-def normalizeData(X):
+def normalize_data(X):
     X_norm = StandardScaler(copy=True, with_mean=True,
                             with_std=True).fit_transform(X)
 
@@ -422,7 +422,7 @@ def get_sample(data_frame, classes, image_type='all', undersample=True, normaliz
             data_frame, X_true, X_false, class_, image_type)
 
         if normalize:
-            return normalizeData(X), y
+            return normalize_data(X), y
         else:
             return X, y
 
@@ -438,7 +438,7 @@ def get_sample(data_frame, classes, image_type='all', undersample=True, normaliz
             data_frame, X_true, X_false, class_, image_type)
 
         if normalize:
-            return normalizeData(X), y
+            return normalize_data(X), y
         else:
             return X, y
 
@@ -507,7 +507,6 @@ def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
     impath =  true_val + str(t) + '.png'
     print('+w ' + impath)
     plt.savefig(impath)
-
 
 
 def rescale(arr, two_percent=True):
