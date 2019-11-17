@@ -699,6 +699,62 @@ def train_all_variations(df):
                         plot_confusion_matrix_image(
                             df, clf, class_, image_type=i)
 
+def calculate_mean_metrics(cm_list, n_folds, total_score):
+    print("Calculating Mean Metrics")
+    TN = 0.0
+    FP = 0.0
+    FN = 0.0
+    TP = 0.0
+    for conf_matrix in cm_list:
+        TN = TN + conf_matrix[0,0]
+        FP = FP + conf_matrix[0,1]
+        FN = FN + conf_matrix[1,0]
+        TP = TP + conf_matrix[1,1]
+
+    TNstr = "{:.3f}".format(TN/n_folds)
+    FPstr = "{:.3f}".format(FP/n_folds)
+    FNstr = "{:.3f}".format(FN/n_folds)
+    TPstr = "{:.3f}".format(TP/n_folds)
+
+    mean_score = "{:.3f}".format(total_score/n_folds)
+
+    return TNstr, FPstr, FNstr, TPstr, mean_score
+
+def train_all_variations_folded(df):
+
+    cd = create_class_dictionary(df)
+
+    norm = [True, False]
+    it = ["all", "l", "s"]
+    n_f = [5, 10]
+
+    for class_ in cd.keys():
+        with open("../log/" + class_ + "_results.csv", 'w') as f:
+
+            f.write("Class,N_Folds,Image_Type,Normalize,TN,FP,FN,TP,Mean_Accuracy")
+            f.write("\n")
+
+            for nf in n_f:
+                for n in norm:
+                    for i in it:
+                        cm_list = list()
+                        folded_data = fold(data_frame, class_, n_folds=nf)
+                        total_score = 0
+                        for idx in range(len(folded_data)):
+                            X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, class_, image_type=i, normalize=n)
+                            clf, score, cm = train(X_train, X_test, y_train, y_test)
+
+                            cm_list.append(cm)
+                            total_score = total_score + float(score)
+
+                        TN, FP, FN, TP, mean_score = calculate_mean_metrics(cm_list, len(folded_data), total_score)
+
+                        line_to_write = class_ + "," + str(nf) + "," + i + "," + str(n) + "," + TN + "," + FP + "," + FN + "," + TP + "," + mean_score
+                        print(line_to_write)
+                        f.write(line_to_write)
+                        f.write("\n")
+
+
 
 """
         LIST OF THE AVAILABLE DATA NOT INVESTIGATED
