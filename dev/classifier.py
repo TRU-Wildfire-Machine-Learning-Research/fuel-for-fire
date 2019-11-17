@@ -691,7 +691,7 @@ def train_all_variations(df):
                     print("{:<40}".format("Undersampling:" + str(s)))
                     print("{:<40}".format("Normalize: " + str(n)))
                     print("{:<40}".format("Image_Type: " + i))
-                    clf, score = train(X, y)
+                    clf, score, cm = train(X, y)
 
                     # Save the top scored plot
                     if max_score < float(score):
