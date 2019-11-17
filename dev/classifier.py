@@ -271,17 +271,30 @@ def show_original_image(df, data):
     plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
     plt.imshow(arr)
     plt.tight_layout()
-    print("+w original_image.png")
-    plt.savefig("original_image" + "_" + data + ".png")
+    impath = "original_image" + "_" + data + ".png"
+    print("+w " + impath)
+    plt.savefig(impath)
 
 
-def concatenate_dataframes(X_true, X_false):
+def concatenate_dataframes(df1, df2):
 
-    os_list = [X_true, X_false]
+    os_list = [df1, df2]
 
     X_full = pd.concat(os_list)
     return X_full
 
+def get_x_data(df, image_type):
+    """Returns a slice of the original dataframe corresponding
+        to the training data
+    """
+    if image_type == "all":
+        X = df.loc[: ,  : "L8_longwave_infrared2" ]
+    elif image_type == "s":
+        X = df.loc[: ,  : "S2_swir2" ]
+    elif image_type == "l":
+        X = df.loc[: ,  "L8_coastal_aerosol" : "L8_longwave_infrared2" ]
+
+    return X
 
 def get_training_set(data, X_true, X_false, class_, image_type='all'):
     """Concatenates true pixels and false pixels into a single dataframe to
@@ -291,15 +304,7 @@ def get_training_set(data, X_true, X_false, class_, image_type='all'):
     """
     X_full = concatenate_dataframes(X_true, X_false)
 
-    # grab the raw data that we want to use (sentinel2, landsat8, or both)
-    if image_type == 'all':
-        X = X_full.loc[:, : 'L8_longwave_infrared2']
-
-    elif image_type == 'l':
-        X = X_full.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
-
-    elif image_type == 's':
-        X = X_full.loc[:, : 'S2_swir2']
+    X = get_x_data(X_full, image_type)
 
     y = X_full[class_]
     return X, y
@@ -321,8 +326,7 @@ def oversample(smallerClass, largerClass):
     oversample = smallerClass.copy()
 
     while len(oversample) < len(largerClass):
-        os_l = [oversample, smallerClass]
-        oversample = pd.concat(os_l)
+        oversample = concatenate_dataframes(oversample, smallerClass)
 
     return oversample
 
@@ -623,15 +627,6 @@ def fold(df, class_, n_folds=5):
 
     return folds
 
-def get_x_data(df, image_type):
-    if image_type == "all":
-        X = df.loc[: ,  : "L8_longwave_infrared2" ]
-    elif image_type == "s":
-        X = df.loc[: ,  : "S2_swir2" ]
-    elif image_type == "l":
-        X = df.loc[: ,  "L8_coastal_aerosol" : "L8_longwave_infrared2" ]
-
-    return X
 
 def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all", normalize=False):
     cd = create_class_dictionary(fd[0])
