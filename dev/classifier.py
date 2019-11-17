@@ -460,6 +460,7 @@ def print_classifier_metrics(y_test, y_pred):
     print("")
     for arr in cm:
         print(arr)
+    return cm
 
 
 def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
