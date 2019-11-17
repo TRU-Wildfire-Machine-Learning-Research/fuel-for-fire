@@ -572,12 +572,12 @@ def trainGB(X_train, X_test, y_train, y_test):
 
     score = "{:.3f}".format(gbrt.score(X_test, y_test))
     print("Test score:", score)
-    print_classifier_metrics(y_test, y_pred)
+    cm = print_classifier_metrics(y_test, y_pred)
 
-    return gbrt, score
+    return gbrt, score, cm
 
 
-def fold(df, class_, n_folds=5, normalize=True):
+def fold(df, class_, n_folds=5):
     """
     """
     cd = create_class_dictionary(data_frame)
