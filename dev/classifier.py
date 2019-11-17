@@ -508,7 +508,7 @@ def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
 
 def rescale(arr, two_percent=True):
     """
-    
+
     """
     arr_min = arr.min()
     arr_max = arr.max()
@@ -719,7 +719,7 @@ def train_all_variations_folded(df):
 
     norm = [True, False]
     it = ["all", "l", "s"]
-    n_f = [5, 10]
+    n_f = [2, 3, 5, 7, 10, 12]
 
     for class_ in cd.keys():
         with open("../log/" + class_ + "_results.csv", 'w') as f:
@@ -731,7 +731,9 @@ def train_all_variations_folded(df):
                 for n in norm:
                     for i in it:
                         cm_list = list()
+
                         folded_data = fold(data_frame, class_, n_folds=nf)
+
                         total_score = 0
                         for idx in range(len(folded_data)):
                             X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, class_, image_type=i, normalize=n)
@@ -743,7 +745,7 @@ def train_all_variations_folded(df):
                         TN, FP, FN, TP, mean_score = calculate_mean_metrics(cm_list, len(folded_data), total_score)
 
                         line_to_write = class_ + "," + str(nf) + "," + i + "," + str(n) + "," + TN + "," + FP + "," + FN + "," + TP + "," + mean_score
-                        print(line_to_write)
+
                         f.write(line_to_write)
                         f.write("\n")
 
