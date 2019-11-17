@@ -773,18 +773,37 @@ if __name__ == "__main__":
 
     data_frame = populate_data_frame(get_data("../data/"), showplots=False)
 
-    # train_all_variations_folded(data_frame)
-    folded_data = fold(data_frame, "water", n_folds=10)
-    TN, FP, FN, TP, mean_score = train_folded(folded_data, "water", n_folds=5, image_type='all', normalize=True)
+    train_all_variations_folded(data_frame)
 
-    # create_class_dictionary(data_frame)
-    # X, y = get_sample(data_frame, "water", image_type='l' undersample=False, normalize=True)
-    # X, y = get_sample(data_frame, ["water", "river"], image_type='all' undersample=False, normalize=True)
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.2)
-    # train(X_train, X_test, y_train, y_test)
-    # plot_confusion_matrix_image(data_frame, clf, "water", image_type="all")
-    # check_intersection_column(data_frame, "water", "river")
-    # folded_data = fold(data_frame, "water", n_folds=10)
-    # TN, FP, FN, TP, mean_score = train_folded(folded_data, class_, n_folds=5, image_type='all', normalize=True)
-    # X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, class_, image_type=i, normalize=n)
-    # train_all_variations(data_frame)
+    """     Single fold training
+
+        X, y = get_sample(data_frame, "water", image_type='l' undersample=False, normalize=True)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.2)
+        clf, score, cm = train(X_train, X_test, y_train, y_test)
+    """
+
+    """     Single fold training of union classes
+
+        X, y = get_sample(data_frame, ["water", "river"], image_type='all' undersample=False, normalize=True)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.2)
+        clf, score, cm = train(X_train, X_test, y_train, y_test)
+    """
+
+    """     Folded data training
+
+        folded_data = fold(data_frame, "water", n_folds=10)
+        TN, FP, FN, TP, mean_score = train_folded(folded_data, class_, n_folds=5, image_type='all', normalize=True)
+    """
+
+    """     Testing for folding and training all data with number of fold options built in
+
+        train_all_variations(data_frame)
+    """
+
+    """     Other useful functions
+
+        plot_confusion_matrix_image(data_frame, clf, "water", image_type="all")
+        check_intersection_column(data_frame, "water", "river")
+        folded_data = fold(data_frame, "water", n_folds=10)
+    """
+
