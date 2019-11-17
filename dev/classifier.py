@@ -556,15 +556,12 @@ def train(X_train, X_test, y_train, y_test):
     score = "{:.3f}".format(sgd_clf.score(X_test, y_test))
     print("Test score:", score)
 
-    print_classifier_metrics(y_test, y_pred)
-    return sgd_clf, score
+    cm = print_classifier_metrics(y_test, y_pred)
+    return sgd_clf, score, cm
 
 
-def trainGB(X, y):
+def trainGB(X_train, X_test, y_train, y_test):
     gbrt = GradientBoostingClassifier(random_state=0)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, random_state=0, test_size=0.2)
 
     np.set_printoptions(precision=3)
 
