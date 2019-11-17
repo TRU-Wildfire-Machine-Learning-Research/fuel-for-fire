@@ -607,10 +607,11 @@ def fold(df, class_, n_folds=5):
     for f in range(n_folds):
         X_tsample = X_true.sample(half_fold_size)
         X_fsample = X_false.sample(half_fold_size)
+
+        # Delete the data from the original dataframes
         X_true.drop(index=X_tsample.index.values.tolist(), inplace=True)
         X_false.drop(index=X_fsample.index.values.tolist(), inplace=True)
-        print("f sample:", len(X_fsample))
-        print("t sample:", len(X_tsample))
+
         fold = concatenate_dataframes(X_tsample, X_fsample)
         fold.sample(frac=1) # shuffle fold
         folds.append(fold)
@@ -618,6 +619,11 @@ def fold(df, class_, n_folds=5):
     # Append the left over data from using the floor method
     fold = concatenate_dataframes(X_true, X_false)
     folds[0] = folds[0].append(fold)
+
+    print("{:/^30}".format("Data Folded"))
+    print("Number of Folds:", n_folds)
+    print("Size of each fold:", str(fold_size))
+    print("Leftover datapoints added to fold 0:",len(fold))
 
     return folds
 
