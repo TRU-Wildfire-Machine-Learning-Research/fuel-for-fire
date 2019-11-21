@@ -755,27 +755,28 @@ def train_all_variations_folded(df):
 
     cd = create_class_dictionary(df)
 
+    n_f = [2, 3, 5, 7, 10, 12]
+    disjoint = [True, False]
     norm = [True, False]
     it = ["all", "l", "s"]
-    n_f = [2, 3, 5, 7, 10, 12]
 
     for class_ in cd.keys():
         with open("../log/" + class_ + "_results.csv", 'w') as f:
 
-            f.write("Class,N_Folds,Image_Type,Normalize,TN,FP,FN,TP,Mean_Accuracy")
+            f.write("Class,N_Folds,Image_Type,Disjoint,Normalize,TN,FP,FN,TP,Mean_Accuracy")
             f.write("\n")
-
             for nf in n_f:
-                for n in norm:
-                    for i in it:
-                        folded_data = fold(data_frame, class_, n_folds=nf)
-                        TN, FP, FN, TP, mean_score = train_folded(folded_data, class_, n_folds=nf, image_type=i, normalize=n)
-                        line_to_write = class_ + "," + str(nf) + "," + i + "," + str(n) + "," + TN + "," + FP + "," + FN + "," + TP + "," + mean_score
+                for d in disjoint:
+                    for n in norm:
+                        for i in it:
+                            folded_data = fold(data_frame, class_, n_folds=nf, disjoint=d)
+                            TN, FP, FN, TP, mean_score = train_folded(folded_data, class_, n_folds=nf, image_type=i, normalize=n)
+                            line_to_write = class_ + "," + str(nf) + "," + i + "," + str(d) + "," + str(n) + "," + TN + "," + FP + "," + FN + "," + TP + "," + mean_score
 
-                        print("")
-                        print(line_to_write)
-                        f.write(line_to_write)
-                        f.write("\n")
+                            print("")
+                            print(line_to_write)
+                            f.write(line_to_write)
+                            f.write("\n")
 
 
 """
