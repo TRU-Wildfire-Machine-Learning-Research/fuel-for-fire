@@ -283,6 +283,7 @@ def concatenate_dataframes(df1, df2):
     X_full = pd.concat(os_list)
     return X_full
 
+
 def get_x_data(df, image_type):
     """Returns a slice of the original dataframe corresponding
         to the training data
@@ -295,6 +296,7 @@ def get_x_data(df, image_type):
         X = df.loc[: ,  "L8_coastal_aerosol" : "L8_longwave_infrared2" ]
 
     return X
+
 
 def get_training_set(data, X_true, X_false, class_, image_type='all'):
     """Concatenates true pixels and false pixels into a single dataframe to
@@ -375,10 +377,22 @@ def check_intersection_column(df, col1, col2):
     """
     col1b = col1 + "_bool"
     col2b = col2 + "_bool"
-    res = df[col1b] & df[col2b]
+    res = df.loc[df[col1b] & df[col2b] == True].index.values
+    print("Intersection of",col1, "and", col2, len(res))
+    return res
 
-    x = pd.value_counts(res)
-    print(col1, "and", col2 + ": ", x[1])
+
+def remove_intersections(df, class_):
+    cd = create_class_dictionary(df)
+    print(len(df))
+    for c in cd.keys():
+        if c == class_:
+            continue
+        else:
+            list_of_indices = check_intersection_column(df, class_, c)
+            df = df.drop(list_of_indices, axis=0)
+    print("Length after removing intersections: ", len(df))
+    return df
 
 
 def true_sample_is_smaller(t, f):
@@ -674,9 +688,12 @@ def build_folds(X_true, X_false, n_folds):
     return folds
 
 
-def fold(df, class_, n_folds=5):
+def fold(data_frame, class_, n_folds=5, disjoint=False):
     """
     """
+    if disjoint:
+        data_frame = remove_intersections(data_frame, class_)
+
     cd = create_class_dictionary(data_frame)
 
     # Retrieve the original data
