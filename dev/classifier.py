@@ -377,7 +377,7 @@ def create_union_column(data_frame, classes, dictionary):
     return data_frame, class_str, dictionary
 
 
-def check_intersection_column(df, col1, col2):
+def get_intersection_indices(df, col1, col2):
     """Does an AND operation on col1 and col2,
         printing the result. This represents
         the number of pixels that exist in class1
@@ -397,7 +397,7 @@ def remove_intersections(df, class_):
         if c == class_:
             continue
         else:
-            list_of_indices = check_intersection_column(df, class_, c)
+            list_of_indices = get_intersection_indices(df, class_, c)
             df = df.drop(list_of_indices, axis=0)
     print("Length after removing intersections: ", len(df))
     return df
@@ -829,7 +829,7 @@ if __name__ == "__main__":
     """     Other useful functions
 
         plot_confusion_matrix_image(data_frame, clf, "water", image_type="all")
-        check_intersection_column(data_frame, "water", "river")
+        get_intersection_indices(data_frame, "water", "river")
         folded_data = fold(data_frame, "water", n_folds=10)
     """
 
