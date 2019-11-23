@@ -476,11 +476,11 @@ def print_classifier_metrics(y_test, y_pred):
     print("[fn tp]\n")
     for arr in cm:
         print(arr)
-    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    cm_p = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     print("")
     for arr in cm:
         print(arr)
-    return cm
+    return cm, cm_p
 
 
 def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
@@ -577,8 +577,8 @@ def train(X_train, X_test, y_train, y_test):
     score = "{:.3f}".format(sgd_clf.score(X_test, y_test))
     print("Test score:", score)
 
-    cm = print_classifier_metrics(y_test, y_pred)
-    return sgd_clf, score, cm
+    cm, cm_p = print_classifier_metrics(y_test, y_pred)
+    return sgd_clf, score, cm, cm_p
 
 
 def trainGB(X_train, X_test, y_train, y_test):
@@ -634,7 +634,7 @@ def train_all_variations(df):
                             df, clf, class_, image_type=i)
 
 
-def calculate_mean_metrics(cm_list, n_folds, total_score):
+def calculate_mean_metrics(cm_list, n_folds, total_score, percentage=False):
     print("Calculating Mean Metrics")
     TN = 0.0
     FP = 0.0
@@ -645,7 +645,8 @@ def calculate_mean_metrics(cm_list, n_folds, total_score):
         FP = FP + conf_matrix[0,1]
         FN = FN + conf_matrix[1,0]
         TP = TP + conf_matrix[1,1]
-
+    if not percentage:
+        n_folds = 1
     TNstr = "{:.3f}".format(TN/n_folds)
     FPstr = "{:.3f}".format(FP/n_folds)
     FNstr = "{:.3f}".format(FN/n_folds)
@@ -746,40 +747,44 @@ def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all", no
 
 def train_folded(folded_data, class_, n_folds=5, image_type='all', normalize=True):
     cm_list = list()
+    cm_p_list = list()
     total_score = 0
 
     for idx in range(len(folded_data)):
         X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, class_, image_type=image_type, normalize=normalize)
-        clf, score, cm = train(X_train, X_test, y_train, y_test)
+        clf, score, cm, cm_p = train(X_train, X_test, y_train, y_test)
 
         cm_list.append(cm)
+        cm_p_list.append(cm_p)
         total_score = total_score + float(score)
 
     TN, FP, FN, TP, mean_score = calculate_mean_metrics(cm_list, len(folded_data), total_score)
-    return TN, FP, FN, TP, mean_score
+    TN_p, FP_p, FN_p, TP_p, mean_score = calculate_mean_metrics(cm_p_list, len(folded_data), total_score, True)
+    return TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score
 
 
 def train_all_variations_folded(df):
-
+    newpath = "../log/folded_classifier/" + get_date_string()
+    os.mkdir(newpath)
     cd = create_class_dictionary(df)
 
-    n_f = [2, 3, 5, 7, 10, 12]
+    n_f = [2,5,10]
     disjoint = [True, False]
-    norm = [True, False]
-    it = ["all", "l", "s"]
+    norm = [True]
+    it = ["all"]
 
     for class_ in cd.keys():
-        with open("../log/" + class_ + "_results.csv", 'w') as f:
+        with open(newpath + class_ + "_results.csv", 'w') as f:
 
-            f.write("Class,N_Folds,Image_Type,Disjoint,Normalize,TN,FP,FN,TP,Mean_Accuracy")
+            f.write("Class,N_Folds,Image_Type,Disjoint,Normalize,TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy")
             f.write("\n")
             for nf in n_f:
                 for d in disjoint:
                     for n in norm:
                         for i in it:
-                            folded_data = fold(data_frame, class_, n_folds=nf, disjoint=d)
-                            TN, FP, FN, TP, mean_score = train_folded(folded_data, class_, n_folds=nf, image_type=i, normalize=n)
-                            line_to_write = class_ + "," + str(nf) + "," + i + "," + str(d) + "," + str(n) + "," + TN + "," + FP + "," + FN + "," + TP + "," + mean_score
+                            folded_data = fold(df, class_, n_folds=nf, disjoint=d)
+                            TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score = train_folded(folded_data, class_, n_folds=nf, image_type=i, normalize=n)
+                            line_to_write = class_ + "," + str(nf) + "," + i + "," + str(d) + "," + str(n) + "," + TN + "," + FP + "," + FN + "," + TP + ","+ TN_p + "," + FP_p + "," + FN_p + "," + TP_p + "," + mean_score
 
                             print("")
                             print(line_to_write)
