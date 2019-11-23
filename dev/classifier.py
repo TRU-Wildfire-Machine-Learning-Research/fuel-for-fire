@@ -50,6 +50,14 @@ def get_data(fp):
     return rasterBin
 
 
+def get_date_string():
+    day = datetime.datetime.now().day
+    hour = datetime.datetime.now().hour
+    min = datetime.datetime.now().minute
+
+    return str(day) + "_" + str(hour) + "_" + str(min) + "/"
+
+
 def populate_data_frame(rasterBin, showplots=False):
     """Receives a list of file paths to .bin files.
         A ground truth raster (predefined) is read,
