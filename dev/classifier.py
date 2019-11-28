@@ -1,40 +1,44 @@
+import os
+import sys
+import math
+import copy
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-import os
 import rasterio
 from rasterio import plot
 from rasterio.plot import show
 import pandas as pd
-import numpy as np
 from sklearn.preprocessing import StandardScaler
-from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix
-from sklearn.utils.multiclass import unique_labels
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import SGDClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
+
+# these guys can be read off the input data variable:
+lines = 401  # y dimension
+samples = 410  # x dimension
 
 
 def get_data(fp):
     """Assumes the filepath provided contains both
         .hdr and .bin files within the fp provided in the function
-        call. 
+        call.
 
         returns a list of file paths to .bin files
     """
+
+    if not os.path.exists(fp):
+        print("Error: couldn't find path:\n\t" + fp)
+        sys.exit(1)
 
     rasterBin = []
     for root, dirs, files in os.walk(fp, topdown=False):
@@ -47,14 +51,14 @@ def get_data(fp):
 
 
 def populate_data_frame(rasterBin, showplots=False):
-    """Receives a list of file paths to .bin files. 
-        A ground truth raster (predefined) is read, 
+    """Receives a list of file paths to .bin files.
+        A ground truth raster (predefined) is read,
         band by band, and stored in the data_frame.
-        Additional 'labeled' truth data images are 
+        Additional 'labeled' truth data images are
         read and saved to the dataframe. These values
         are also decoded to binary interpretations, and
         the binary interpretation is stored in its own
-        column. 
+        column.
 
         Showplots argument added to visualize the raw data
         and the truth data.
@@ -63,18 +67,29 @@ def populate_data_frame(rasterBin, showplots=False):
         Returns a populated pandas dataframe.
     """
     data_frame = pd.DataFrame(columns=(
-        'coastal_aerosol',
-        'blue',
-        'green',
-        'red',
-        'vre1',
-        'vre2',
-        'vre3',
-        'nir',
-        'narrow_nir',
-        'water_vapour',
-        'swir_cirrus',
-        'swir2',
+        'S2_coastal_aerosol',
+        'S2_blue',
+        'S2_green',
+        'S2_red',
+        'S2_vre1',
+        'S2_vre2',
+        'S2_vre3',
+        'S2_nir',
+        'S2_narrow_nir',
+        'S2_water_vapour',
+        'S2_swir_cirrus',
+        'S2_swir2',
+        'L8_coastal_aerosol',
+        'L8_blue',
+        'L8_green',
+        'L8_red',
+        'L8_near_infrared',
+        'L8_shortwave_infrared1',
+        'L8_shortwave_infrared2',
+        'L8_panchromatic',
+        'L8_cirrus',
+        'L8_longwave_infrared1',
+        'L8_longwave_infrared2',
         'water_val',
         'water_bool',
         'river_val',
@@ -100,11 +115,12 @@ def populate_data_frame(rasterBin, showplots=False):
 
             dataset = rasterio.open(raster)
             for idx in dataset.indexes:
-                """
-                reads in the current band which is a mat of 401, 410 and ravels it
-                storing the result in the current column. ie(X values)
-                """
                 data_frame.iloc[:, idx-1] = dataset.read(idx).ravel()
+
+        elif "L8.bin_4x.bin_sub.bin" in raster:
+            dataset = rasterio.open(raster)
+            for idx in dataset.indexes:
+                data_frame.iloc[:, idx+11] = dataset.read(idx).ravel()
 
         elif "WATERSP.tif_project_4x.bin_sub.bin" in raster:
             water = rasterio.open(raster).read(1)
@@ -152,14 +168,15 @@ def populate_data_frame(rasterBin, showplots=False):
             data_frame['exposed_bool'] = data_frame['exposed_val'] != 0.0
 
     if showplots:
-        show_original_image(data_frame)
+        show_original_image(data_frame, 'l')
+        show_original_image(data_frame, 's')
         show_truth_data_subplot(data_frame)
     return data_frame
 
 
 def create_image_array(df, class_):
     """Generates a numpy.ndarray the same
-        size as the raw data (statically defined) 
+        size as the raw data (statically defined)
         that is used to visualize a binary representation
         of truth data.
 
@@ -170,8 +187,28 @@ def create_image_array(df, class_):
     true_df = df[class_bool].loc[df[class_bool] == True]
     for idx in true_df.index:
         arr[idx] = 0
-        rs_arr = arr.reshape(401, 410)
+        rs_arr = arr.reshape(lines, samples)  # 401, 410)
     return rs_arr
+
+
+def create_class_dictionary(data_frame):
+    """dictionary for making simple requests for data from
+        the dataframe. Key corresponds to a class name
+        ie, water. The value associated with any key is
+        simply the key with '_bool' appended to the end
+        of the string.
+
+        returns a dictionary
+
+    """
+    column_values = [
+        col_name for col_name in data_frame.columns if "bool" in col_name]
+    column_keys = []
+    for key in column_values:
+        column_keys.append(key.replace("_bool", ""))
+    dictionary = dict(zip(column_keys, column_values))
+
+    return dictionary
 
 
 def show_truth_data_subplot(df, window_title="Truth Data"):
@@ -195,22 +232,75 @@ def show_truth_data_subplot(df, window_title="Truth Data"):
             col = 0
             row = row + 1
 
+    # make this plot a bit bigger
+    plt.gcf().set_size_inches(14, 14. * float(lines) / float(samples))
     plt.tight_layout()
-    plt.show()
+    print("+w truth_data.png")
+    plt.savefig("truth_data.png")  # show()
 
 
-def get_training_set(X_true, X_false, class_):
-    """Concatenates true pixels and false pixels into a fingle data to
-        create a dataset. 
+def show_original_image(df, data):
+    """builds an array of the RGB values of the
+        truth image, scaling the original values
+        between 0 - 1 (matplotlib req.) and
+        displays that image in a plot.
 
-        Returns X, a pandas dataframe, and y, a pandas series
     """
+
+    arr = np.zeros((lines, samples, 3))
+
+    if data == 's':
+
+        blue = rescale(df.S2_blue.values.reshape(lines, samples))
+        red = rescale(df.S2_red.values.reshape(lines, samples))
+        green = rescale(df.S2_green.values.reshape(lines, samples))
+
+    elif data == 'l':
+
+        blue = rescale(df.L8_blue.values.reshape(lines, samples))
+        red = rescale(df.L8_red.values.reshape(lines, samples))
+        green = rescale(df.L8_green.values.reshape(lines, samples))
+
+    else:
+        print("Specify an image to show in show_original_image(df, __) ('s' for sentinel2 or 'l' for landsat8)")
+
+    arr[:, :, 0] = red
+    arr[:, :, 1] = green
+    arr[:, :, 2] = blue
+
+    plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
+    plt.imshow(arr)
+    plt.tight_layout()
+    print("+w original_image.png")
+    plt.savefig("original_image" + "_" + data + ".png")
+
+
+def concatenate_dataframes(X_true, X_false):
+
     os_list = [X_true, X_false]
 
     X_full = pd.concat(os_list)
+    return X_full
 
-    # only considers the columns up to swir2 (truth data's end col)
-    X = X_full.loc[:, : 'swir2']
+
+def get_training_set(data, X_true, X_false, class_, image_type='all'):
+    """Concatenates true pixels and false pixels into a single dataframe to
+        create a dataset.
+
+        Returns X, a pandas dataframe, and y, a pandas series
+    """
+    X_full = concatenate_dataframes(X_true, X_false)
+
+    # grab the raw data that we want to use (sentinel2, landsat8, or both)
+    if image_type == 'all':
+        X = X_full.loc[:, : 'L8_longwave_infrared2']
+
+    elif image_type == 'l':
+        X = X_full.loc[:, 'L8_coastal_aerosol': 'L8_longwave_infrared2']
+
+    elif image_type == 's':
+        X = X_full.loc[:, : 'S2_swir2']
+
     y = X_full[class_]
     return X, y
 
@@ -233,27 +323,8 @@ def oversample(smallerClass, largerClass):
     while len(oversample) < len(largerClass):
         os_l = [oversample, smallerClass]
         oversample = pd.concat(os_l)
+
     return oversample
-
-
-def create_class_dictionary(data_frame):
-    """dictionary for making simple requests for data from
-        the dataframe. Key corresponds to a class name
-        ie, water. The value associated with any key is
-        simply the key with '_bool' appended to the end
-        of the string.
-
-        returns a dictionary
-
-    """
-    column_values = [
-        col_name for col_name in data_frame.columns if "bool" in col_name]
-    column_keys = []
-    for key in column_values:
-        column_keys.append(key.replace("_bool", ""))
-    dictionary = dict(zip(column_keys, column_values))
-
-    return dictionary
 
 
 def create_union_class_string(classes):
@@ -274,7 +345,7 @@ def create_union_column(data_frame, classes, dictionary):
         columns of data. This augments the passed dataframe.
 
         returns a pandas dataframe with a new column, the string
-        that corresponds to that columns name in the dataframe, 
+        that corresponds to that columns name in the dataframe,
         and a class dictionary with the new class added to the
         dictionary.
 
@@ -292,11 +363,25 @@ def create_union_column(data_frame, classes, dictionary):
     return data_frame, class_str, dictionary
 
 
+def check_intersection_column(df, col1, col2):
+    """Does an AND operation on col1 and col2,
+        printing the result. This represents
+        the number of pixels that exist in class1
+        and class2
+    """
+    col1b = col1 + "_bool"
+    col2b = col2 + "_bool"
+    res = df[col1b] & df[col2b]
+
+    x = pd.value_counts(res)
+    print(col1, "and", col2 + ": ", x[1])
+
+
 def true_sample_is_smaller(t, f):
     return len(t) < len(f)
 
 
-def get_sample(data_frame, classes, undersample=True, normalize=True):
+def get_sample(data_frame, classes, image_type='all', undersample=True, normalize=True):
     """retrieves a class balanced sample of data from the dataframe.
         That is, false class, balanced with true class, with options to
         normalize the feature data, or oversample.
@@ -329,7 +414,8 @@ def get_sample(data_frame, classes, undersample=True, normalize=True):
             X_true = data_frame[data_frame[class_]
                                 == True].sample(len(X_false))
 
-        X, y = get_training_set(X_true, X_false, class_)
+        X, y = get_training_set(
+            data_frame, X_true, X_false, class_, image_type)
 
         if normalize:
             return normalizeData(X), y
@@ -344,7 +430,8 @@ def get_sample(data_frame, classes, undersample=True, normalize=True):
         else:
             X_false = oversample(X_false, X_true)
 
-        X, y = get_training_set(X_true, X_false, class_)
+        X, y = get_training_set(
+            data_frame, X_true, X_false, class_, image_type)
 
         if normalize:
             return normalizeData(X), y
@@ -357,33 +444,37 @@ def print_classifier_metrics(y_test, y_pred):
 
     """
     cm = confusion_matrix(y_test, y_pred)
-    truenegative, falsepositive, falsenegative, truepositive = confusion_matrix(
-        y_test, y_pred).ravel()
-    print("Confusion Matrix\n")
+
+    print("Confusion Matrix")
+    print("[tn fp]")
+    print("[fn tp]\n")
     for arr in cm:
         print(arr)
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     print("")
     for arr in cm:
         print(arr)
-    print("\nTrue Negative", truenegative)  # False class guessed correctly
-    print("True Positive", truepositive)  # True class guessed correctly
-    print("False Negative", falsenegative)  # False class guessed as true class
-    print("False Positive", falsepositive)  # True class guessed as false class
+    return cm
 
 
-def plot_confusion_matrix_image(df, clf, true_val):
+def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
     """UNDER DEVELOPMENT
 
     """
 
     # grab the test data (includes data the system was trained on)
-    all_data = df.loc[:, : 'swir2']
+    raw_data = get_x_data(df, image_type)
 
-    y_pred = clf.predict(all_data)  # predict on all the data
+    try:
+        y_pred = clf.predict(raw_data)  # predict on all the data
+    except:
+        print("Error: It's likely that you are trying to plot using an image type that isn't the same as the image type in the classifier")
+        print("Ensure that your image_type argument in get_sample() is the same as your image_type argument in plot_confusion_matrix_image()")
+        sys.exit()
+
     y_true = df[true_val + "_bool"]  # store the true values
 
-    arr = np.zeros([164410], dtype='int')
+    arr = np.zeros([lines * samples], dtype='int')
 
     for x in range(len(y_pred)):  # iterate the length of the arrays
         if y_true[x]:
@@ -400,63 +491,55 @@ def plot_confusion_matrix_image(df, clf, true_val):
             else:
                 arr[x] = 15
                 # this is true negative
-    arr = arr.reshape(401, 410)
-    plt.xlabel(xlabel='width (px)')
-    plt.ylabel(ylabel='height (px)')
+    arr = arr.reshape(lines, samples)  # 401, 410
+    plt.xlabel('width (px)')
+    plt.ylabel('height (px)')
 
-    # legend_elements = [Patch(
-    #     label='True Negative'), Patch(
-    #     label='False Positive')]
-
-    # Create the figure
-    # fig, ax = plt.subplots()
-    # ax.legend(handles=legend_elements)
+    plt.clf()
+    plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
     plt.imshow(arr)
-    # colors = [im.cmap(im.value) for value in arr]
-
-    # patches = [Patch(color=colors[i], label="Level {l}".format(l = arr[i])) for i in range(len(arr))]
-    # put those patched as legend-handles into the legend
-    # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-    plt.show()
+    plt.tight_layout()
+    t = datetime.datetime.now().time()
+    impath =  true_val + str(t) + '.png'
+    print('+w ' + impath)
+    plt.savefig(impath)
 
 
-def show_original_image(df):
-    """builds an array of the RGB values of the
-        truth image, scaling the original values
-        between 0 - 1 (matplotlib req.) and
-        displays that image in a plot.
 
+def rescale(arr, two_percent=True):
     """
-    blue = rescale(df.blue.values.reshape(401, 410))
-    red = rescale(df.red.values.reshape(401, 410))
-    green = rescale(df.green.values.reshape(401, 410))
-    arr = np.zeros((401, 410, 3))
-    arr[:, :, 0] = red
-    arr[:, :, 1] = green
-    arr[:, :, 2] = blue
-    plt.imshow(arr)
-    plt.show()
 
-
-def rescale(arr):
-    """
-    https://stackoverflow.com/questions/48571486/converting-from-numpy-arrays-to-a-rgb-image
     """
     arr_min = arr.min()
     arr_max = arr.max()
-    return (arr - arr_min) / (arr_max - arr_min)
+    scaled = (arr - arr_min) / (arr_max - arr_min)
+
+    if two_percent:
+        # 2%-linear stretch transformation for hi-contrast vis
+        values = copy.deepcopy(scaled)
+        values = values.reshape(np.prod(values.shape))
+        values = values.tolist()
+        values.sort()
+        npx = len(values)  # number of pixels
+        if values[-1] < values[0]:
+            print('error: failed to sort')
+            sys.exit(1)
+        v_min = values[int(math.floor(float(npx)*0.02))]
+        v_max = values[int(math.floor(float(npx)*0.98))]
+        scaled -= v_min
+        rng = v_max - v_min
+        if rng > 0.:
+            scaled /= (v_max - v_min)
+
+    return scaled
 
 
-def train(X, y):
+def train(X_train, X_test, y_train, y_test):
     """sklearn SGDClassifier
 
     """
     sgd_clf = SGDClassifier(
-        random_state=42, verbose=False)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, random_state=0, test_size=0.2)
+        random_state=42, verbose=False, max_iter=1000, tol=1.e-3)
 
     np.set_printoptions(precision=3)
 
@@ -466,9 +549,206 @@ def train(X, y):
     y_pred = sgd_clf.predict(X_test)
 
     print("\n{:*^30}\n".format("Training complete"))
-    print("Test score: {:.3f}".format(sgd_clf.score(X_test, y_test)))
-    print_classifier_metrics(y_test, y_pred)
-    return sgd_clf
+    score = "{:.3f}".format(sgd_clf.score(X_test, y_test))
+    print("Test score:", score)
+
+    cm = print_classifier_metrics(y_test, y_pred)
+    return sgd_clf, score, cm
+
+
+def trainGB(X_train, X_test, y_train, y_test):
+    gbrt = GradientBoostingClassifier(random_state=0)
+
+    np.set_printoptions(precision=3)
+
+    print("\n\nBegin Fitting GBC\n")
+
+    gbrt = gbrt.fit(X_train, y_train)
+    y_pred = gbrt.predict(X_test)
+
+    score = "{:.3f}".format(gbrt.score(X_test, y_test))
+    print("Test score:", score)
+    cm = print_classifier_metrics(y_test, y_pred)
+
+    return gbrt, score, cm
+
+
+def fold(df, class_, n_folds=5):
+    """
+    """
+    cd = create_class_dictionary(data_frame)
+
+    # Retrieve the original data
+    class_ = cd[class_]
+    X_true = data_frame[data_frame[class_] == True].copy()
+    X_false = data_frame[data_frame[class_]
+                         == False].copy()
+
+    # Decide which class needs to take a subset
+    if len(X_true) < len(X_false):
+        X_false = X_false.sample(len(X_true))
+    else:
+        X_true = X_true.sample(len(X_false))
+
+    # size
+    size = len(X_true) * 2
+    fold_size = int(math.floor(size/n_folds))
+    half_fold_size = int(math.floor(fold_size/2))
+
+    # Shuffle the data
+    X_true.sample(frac=1)
+    X_false.sample(frac=1)
+
+    folds = list()
+    for f in range(n_folds):
+        X_tsample = X_true.sample(half_fold_size)
+        X_fsample = X_false.sample(half_fold_size)
+
+        # Delete the data from the original dataframes
+        X_true.drop(index=X_tsample.index.values.tolist(), inplace=True)
+        X_false.drop(index=X_fsample.index.values.tolist(), inplace=True)
+
+        fold = concatenate_dataframes(X_tsample, X_fsample)
+        fold.sample(frac=1) # shuffle fold
+        folds.append(fold)
+
+    # Append the left over data from using the floor method
+    fold = concatenate_dataframes(X_true, X_false)
+    folds[0] = folds[0].append(fold)
+
+    print("{:/^30}".format("Data Folded"))
+    print("Number of Folds:", n_folds)
+    print("Size of each fold:", str(fold_size))
+    print("Leftover datapoints added to fold 0:",len(fold))
+
+    return folds
+
+def get_x_data(df, image_type):
+    if image_type == "all":
+        X = df.loc[: ,  : "L8_longwave_infrared2" ]
+    elif image_type == "s":
+        X = df.loc[: ,  : "S2_swir2" ]
+    elif image_type == "l":
+        X = df.loc[: ,  "L8_coastal_aerosol" : "L8_longwave_infrared2" ]
+
+    return X
+
+def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all", normalize=False):
+    cd = create_class_dictionary(fd[0])
+
+    train_is_empty = True
+
+    for f in range(len(fd)):
+        if f == test_data_idx: # This is our test set
+            X_test = get_x_data(fd[test_data_idx], image_type)
+            y_test = fd[test_data_idx][cd[class_]]
+
+        else:
+            if train_is_empty:
+                X_train = get_x_data(fd[test_data_idx], image_type)
+                y_train = fd[test_data_idx][cd[class_]]
+                train_is_empty = False
+            else:
+                X_train = concatenate_dataframes(get_x_data(fd[test_data_idx],image_type), X_train)
+                y_train = concatenate_dataframes(fd[test_data_idx][cd[class_]], y_train)
+    if normalize:
+        X_train = normalizeData(X_train)
+        X_test = normalizeData(X_test)
+
+    return X_train, X_test, y_train, y_test
+
+def train_all_variations(df):
+    """Rudimentary test run of a SGD classifier with all of the possible
+        iterations with the given functionality. Pass a data_frame, the
+        script will save a png representation of each class with the highest
+        performace on the raw data. Variations include: Training on Sentinel2
+        data, Landsat8 data, or both at the same time; Normalizing the data or
+        not normalizing; Undersampling or oversampling; and each of the 9 classes.
+
+    """
+    it = ['all', 'l', 's']
+    us = [True, False]
+    nm = [True, False]
+    class_dictionary = create_class_dictionary(df)
+
+    for class_ in class_dictionary.keys():  # for each class
+        max_score = 0.0
+        for s in us:  # for each type of sampling
+            for n in nm:  # for normalizing or not
+                for i in it:  # for each image type
+                    X, y = get_sample(df, class_, image_type=i,
+                                      undersample=s, normalize=n)
+                    print("")
+                    print("{:*^50}".format(""))
+                    print("{:<40}".format("Class: " + class_))
+                    print("{:<40}".format("Undersampling:" + str(s)))
+                    print("{:<40}".format("Normalize: " + str(n)))
+                    print("{:<40}".format("Image_Type: " + i))
+                    clf, score, cm = train(X, y)
+
+                    # Save the top scored plot
+                    if max_score < float(score):
+                        max_score = float(score)
+                        plot_confusion_matrix_image(
+                            df, clf, class_, image_type=i)
+
+def calculate_mean_metrics(cm_list, n_folds, total_score):
+    print("Calculating Mean Metrics")
+    TN = 0.0
+    FP = 0.0
+    FN = 0.0
+    TP = 0.0
+    for conf_matrix in cm_list:
+        TN = TN + conf_matrix[0,0]
+        FP = FP + conf_matrix[0,1]
+        FN = FN + conf_matrix[1,0]
+        TP = TP + conf_matrix[1,1]
+
+    TNstr = "{:.3f}".format(TN/n_folds)
+    FPstr = "{:.3f}".format(FP/n_folds)
+    FNstr = "{:.3f}".format(FN/n_folds)
+    TPstr = "{:.3f}".format(TP/n_folds)
+
+    mean_score = "{:.3f}".format(total_score/n_folds)
+
+    return TNstr, FPstr, FNstr, TPstr, mean_score
+
+def train_all_variations_folded(df):
+
+    cd = create_class_dictionary(df)
+
+    norm = [True, False]
+    it = ["all", "l", "s"]
+    n_f = [2, 3, 5, 7, 10, 12]
+
+    for class_ in cd.keys():
+        with open("../log/" + class_ + "_results.csv", 'w') as f:
+
+            f.write("Class,N_Folds,Image_Type,Normalize,TN,FP,FN,TP,Mean_Accuracy")
+            f.write("\n")
+
+            for nf in n_f:
+                for n in norm:
+                    for i in it:
+                        cm_list = list()
+
+                        folded_data = fold(data_frame, class_, n_folds=nf)
+
+                        total_score = 0
+                        for idx in range(len(folded_data)):
+                            X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, class_, image_type=i, normalize=n)
+                            clf, score, cm = train(X_train, X_test, y_train, y_test)
+
+                            cm_list.append(cm)
+                            total_score = total_score + float(score)
+
+                        TN, FP, FN, TP, mean_score = calculate_mean_metrics(cm_list, len(folded_data), total_score)
+
+                        line_to_write = class_ + "," + str(nf) + "," + i + "," + str(n) + "," + TN + "," + FP + "," + FN + "," + TP + "," + mean_score
+
+                        f.write(line_to_write)
+                        f.write("\n")
+
 
 
 """
@@ -477,18 +757,19 @@ def train(X, y):
     # vri_s2_objid2.tif_project_4x.bin_sub.bin
     # S2A.bin_4x.bin_sub.bin
     # vri_s3_objid2.tif_project_4x.bin_sub.bin
-    # L8.bin_4x.bin_sub.bin
 """
 
 if __name__ == "__main__":
 
-    data_frame = populate_data_frame(get_data("../data/"), showplots=True)
+    data_frame = populate_data_frame(get_data("../data/"), showplots=False)
 
-    class_dictionary = create_class_dictionary(data_frame)
+    train_all_variations_folded(data_frame)
 
-    X, y = get_sample(data_frame, ["shrub", "herb"],
-                      undersample=False, normalize=True)
 
-    clf = train(X, y)  # generate a classifier
-
-    plot_confusion_matrix_image(data_frame, clf, "shrub_u_herb")
+    # create_class_dictionary(data_frame)
+    # X, y = get_sample(data_frame, "water", image_type='l' undersample=False, normalize=True)
+    # X, y = get_sample(data_frame, ["water", "river"], image_type='all' undersample=False, normalize=True)
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.2)
+    # plot_confusion_matrix_image(data_frame, clf, "water", image_type="all")
+    # check_intersection_column(X_full, "water", "river")
+    # train_all_variations(data_frame)
