@@ -385,9 +385,9 @@ def get_intersection_indices(df, col1, col2):
     """
     col1b = col1 + "_bool"
     col2b = col2 + "_bool"
-    res = df.loc[df[col1b] & df[col2b] == True].index.values
-    print("Intersection of",col1, "and", col2, len(res))
-    return res
+    indices = df.loc[df[col1b] & df[col2b] == True].index.values
+    print("Intersection of", col1 , "and" , col2, len(indices))
+    return indices
 
 
 def remove_intersections(df, class_):
