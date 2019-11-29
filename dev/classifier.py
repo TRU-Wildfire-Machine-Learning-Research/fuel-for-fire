@@ -763,15 +763,10 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all', normalize=Tru
     return TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score
 
 
-def train_all_variations_folded(df):
+def train_all_variations_folded(df, n_f=[2,5,10], disjoint=[True, False], norm=[True], it=[all]):
     newpath = "../log/folded_classifier/" + get_date_string()
     os.mkdir(newpath)
     cd = create_class_dictionary(df)
-
-    n_f = [2,5,10]
-    disjoint = [True, False]
-    norm = [True]
-    it = ["all"]
 
     for class_ in cd.keys():
         with open(newpath + class_ + "_results.csv", 'w') as f:
