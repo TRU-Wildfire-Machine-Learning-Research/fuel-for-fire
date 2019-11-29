@@ -799,7 +799,13 @@ if __name__ == "__main__":
 
     data_frame = populate_data_frame(get_data("../data/"), showplots=False)
 
-    train_all_variations_folded(data_frame)
+    train_all_variations_folded(data_frame, n_f=[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], disjoint=[True], norm=[True], it=['all'])
+
+    # fd = fold(data_frame, 'water', n_folds=5, disjoint=False)
+    # for idx in range(len(fd)):
+    #     X_train, X_test, y_train, y_test = train_test_split_folded_data(fd, idx, 'water', image_type='all', normalize=True)
+    #     clf, score, cm, cm_p = train(X_train, X_test, y_train, y_test)
+    #     plot_confusion_matrix_image(data_frame, clf, 'water', image_type='all')
 
     """     Single fold training
 
