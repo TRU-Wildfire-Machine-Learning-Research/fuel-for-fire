@@ -192,7 +192,7 @@ def create_image_array(df, class_):
     """
     arr = np.ones([len(df)], dtype='int')
     class_bool = class_ + "_bool"
-    true_df = df[class_bool].loc[df[class_bool] == True]
+    true_df = df[class_bool].loc[df[class_bool] is True]
     for idx in true_df.index:
         arr[idx] = 0
         rs_arr = arr.reshape(lines, samples)  # 401, 410)
@@ -270,7 +270,8 @@ def show_original_image(df, data):
         green = rescale(df.L8_green.values.reshape(lines, samples))
 
     else:
-        print("Specify an image to show in show_original_image(df, __) ('s' for sentinel2 or 'l' for landsat8)")
+        print("Specify an image to show in show_original_image(df, __) " +
+              "('s' for sentinel2 or 'l' for landsat8)")
 
     arr[:, :, 0] = red
     arr[:, :, 1] = green
@@ -297,12 +298,11 @@ def get_x_data(df, image_type):
         to the training data
     """
     if image_type == "all":
-        X = df.loc[: ,  : "L8_longwave_infrared2" ]
+        X = df.loc[:, :"L8_longwave_infrared2"]
     elif image_type == "s":
-        X = df.loc[: ,  : "S2_swir2" ]
+        X = df.loc[:, :"S2_swir2"]
     elif image_type == "l":
-        X = df.loc[: ,  "L8_coastal_aerosol" : "L8_longwave_infrared2" ]
-
+        X = df.loc[:, "L8_coastal_aerosol": "L8_longwave_infrared2"]
     return X
 
 
@@ -385,8 +385,8 @@ def get_intersection_indices(df, col1, col2):
     """
     col1b = col1 + "_bool"
     col2b = col2 + "_bool"
-    indices = df.loc[df[col1b] & df[col2b] == True].index.values
-    print("Intersection of", col1 , "and" , col2, len(indices))
+    indices = df.loc[df[col1b] & df[col2b] is True].index.values
+    print("Intersection of", col1, "and", col2, len(indices))
     return indices
 
 
@@ -407,7 +407,8 @@ def true_sample_is_smaller(t, f):
     return len(t) < len(f)
 
 
-def get_sample(data_frame, classes, image_type='all', undersample=True, normalize=True):
+def get_sample(data_frame, classes, image_type='all', undersample=True,
+               normalize=True):
     """retrieves a class balanced sample of data from the dataframe.
         That is, false class, balanced with true class, with options to
         normalize the feature data, or oversample.
@@ -424,21 +425,20 @@ def get_sample(data_frame, classes, image_type='all', undersample=True, normaliz
     else:
         class_ = class_dict[classes.lower()]
 
-    X_true = data_frame[data_frame[class_] == True]
-    X_false = data_frame[data_frame[class_]
-                         == False]
+    X_true = data_frame[data_frame[class_] is True]
+    X_false = data_frame[data_frame[class_] is False]
 
     if undersample:
 
         if true_sample_is_smaller(X_true, X_false):
             # true is smaller, so take a subset of the false data
             X_false = data_frame[data_frame[class_]
-                                 == False].sample(len(X_true))
+                                 is False].sample(len(X_true))
 
         else:
             # false is smaller, so take a subset of the true data
             X_true = data_frame[data_frame[class_]
-                                == True].sample(len(X_false))
+                                is True].sample(len(X_false))
 
         X, y = get_training_set(
             data_frame, X_true, X_false, class_, image_type)
@@ -493,9 +493,11 @@ def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
 
     try:
         y_pred = clf.predict(raw_data)  # predict on all the data
-    except:
-        print("Error: It's likely that you are trying to plot using an image type that isn't the same as the image type in the classifier")
-        print("Ensure that your image_type argument in get_sample() is the same as your image_type argument in plot_confusion_matrix_image()")
+    except Exception:
+        print("Error: It's likely that you are trying to plot using an image" +
+              "type that isn't the same as the image type in the classifier")
+        print("Ensure that your image_type argument in get_sample() equals " +
+              "the image_type argument in plot_confusion_matrix_image()")
         sys.exit()
 
     y_true = df[true_val + "_bool"]  # store the true values
@@ -526,7 +528,7 @@ def plot_confusion_matrix_image(df, clf, true_val, image_type='all'):
     plt.imshow(arr)
     plt.tight_layout()
     t = datetime.datetime.now().time()
-    impath =  true_val + str(t) + '.png'
+    impath = true_val + str(t) + '.png'
     print('+w ' + impath)
     plt.savefig(impath)
 
@@ -604,8 +606,8 @@ def train_all_variations(df):
         script will save a png representation of each class with the highest
         performace on the raw data. Variations include: Training on Sentinel2
         data, Landsat8 data, or both at the same time; Normalizing the data or
-        not normalizing; Undersampling or oversampling; and each of the 9 classes.
-
+        not normalizing; Undersampling or oversampling; and each of the 9
+        classes.
     """
     it = ['all', 'l', 's']
     us = [True, False]
@@ -641,10 +643,10 @@ def calculate_mean_metrics(cm_list, n_folds, total_score, percentage=False):
     FN = 0.0
     TP = 0.0
     for conf_matrix in cm_list:
-        TN = TN + conf_matrix[0,0]
-        FP = FP + conf_matrix[0,1]
-        FN = FN + conf_matrix[1,0]
-        TP = TP + conf_matrix[1,1]
+        TN = TN + conf_matrix[0, 0]
+        FP = FP + conf_matrix[0, 1]
+        FN = FN + conf_matrix[1, 0]
+        TP = TP + conf_matrix[1, 1]
     if not percentage:
         n_folds = 1
     TNstr = "{:.3f}".format(TN/n_folds)
@@ -682,7 +684,7 @@ def build_folds(X_true, X_false, n_folds):
         X_false.drop(index=X_fsample.index.values.tolist(), inplace=True)
 
         fold = concatenate_dataframes(X_tsample, X_fsample)
-        fold.sample(frac=1) # shuffle fold
+        fold.sample(frac=1)  # shuffle fold
         folds.append(fold)
 
     # Append the left over data from using the floor method
@@ -692,7 +694,7 @@ def build_folds(X_true, X_false, n_folds):
     print("{:/^30}".format("Data Folded"))
     print("Number of Folds:", n_folds)
     print("Size of each fold:", str(fold_size))
-    print("Leftover datapoints added to fold 0:",len(fold))
+    print("Leftover datapoints added to fold 0:", len(fold))
 
     return folds
 
@@ -707,9 +709,9 @@ def fold(data_frame, class_, n_folds=5, disjoint=False):
 
     # Retrieve the original data
     class_ = cd[class_]
-    X_true = data_frame[data_frame[class_] == True].copy()
+    X_true = data_frame[data_frame[class_] is True].copy()
     X_false = data_frame[data_frame[class_]
-                         == False].copy()
+                         is False].copy()
 
     # Decide which class needs to take a subset
     if len(X_true) < len(X_false):
@@ -720,13 +722,14 @@ def fold(data_frame, class_, n_folds=5, disjoint=False):
     return build_folds(X_true, X_false, n_folds)
 
 
-def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all", normalize=False):
+def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all",
+                                 normalize=False):
     cd = create_class_dictionary(fd[0])
 
     train_is_empty = True
 
     for f in range(len(fd)):
-        if f == test_data_idx: # This is our test set
+        if f == test_data_idx:  # This is our test set
             X_test = get_x_data(fd[test_data_idx], image_type)
             y_test = fd[test_data_idx][cd[class_]]
 
@@ -736,8 +739,11 @@ def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all", no
                 y_train = fd[test_data_idx][cd[class_]]
                 train_is_empty = False
             else:
-                X_train = concatenate_dataframes(get_x_data(fd[test_data_idx],image_type), X_train)
-                y_train = concatenate_dataframes(fd[test_data_idx][cd[class_]], y_train)
+                X_train = concatenate_dataframes(get_x_data(fd[test_data_idx],
+                                                            image_type),
+                                                 X_train)
+                y_train = concatenate_dataframes(fd[test_data_idx][cd[class_]],
+                                                 y_train)
     if normalize:
         X_train = normalize_data(X_train)
         X_test = normalize_data(X_test)
@@ -745,25 +751,34 @@ def train_test_split_folded_data(fd, test_data_idx, class_, image_type="all", no
     return X_train, X_test, y_train, y_test
 
 
-def train_folded(folded_data, class_, n_folds=5, image_type='all', normalize=True):
+def train_folded(folded_data, class_, n_folds=5, image_type='all',
+                 normalize=True):
     cm_list = list()
     cm_p_list = list()
     total_score = 0
 
     for idx in range(len(folded_data)):
-        X_train, X_test, y_train, y_test = train_test_split_folded_data(folded_data, idx, class_, image_type=image_type, normalize=normalize)
+        X_train, X_test, y_train, y_test = \
+          train_test_split_folded_data(folded_data, idx, class_,
+                                       image_type=image_type,
+                                       normalize=normalize)
         clf, score, cm, cm_p = train(X_train, X_test, y_train, y_test)
 
         cm_list.append(cm)
         cm_p_list.append(cm_p)
         total_score = total_score + float(score)
 
-    TN, FP, FN, TP, mean_score = calculate_mean_metrics(cm_list, len(folded_data), total_score)
-    TN_p, FP_p, FN_p, TP_p, mean_score = calculate_mean_metrics(cm_p_list, len(folded_data), total_score, True)
+    TN, FP, FN, TP, mean_score = calculate_mean_metrics(cm_list,
+                                                        len(folded_data),
+                                                        total_score)
+    TN_p, FP_p, FN_p, TP_p, mean_score = \
+        calculate_mean_metrics(cm_p_list, len(folded_data), total_score,
+                               True)
     return TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score
 
 
-def train_all_variations_folded(df, n_f=[2,5,10], disjoint=[True, False], norm=[True], it=[all]):
+def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
+                                norm=[True], it=[all]):
     newpath = "../log/folded_classifier/" + get_date_string()
     os.mkdir(newpath)
     cd = create_class_dictionary(df)
@@ -771,16 +786,28 @@ def train_all_variations_folded(df, n_f=[2,5,10], disjoint=[True, False], norm=[
     for class_ in cd.keys():
         with open(newpath + class_ + "_results.csv", 'w') as f:
 
-            f.write("Class,N_Folds,Image_Type,Disjoint,Normalize,TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy")
+            f.write("Class,N_Folds,Image_Type,Disjoint,Normalize," +
+                    "TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy")
             f.write("\n")
             for nf in n_f:
                 for d in disjoint:
                     for n in norm:
                         for i in it:
-                            folded_data = fold(df, class_, n_folds=nf, disjoint=d)
-                            TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score = train_folded(folded_data, class_, n_folds=nf, image_type=i, normalize=n)
-                            line_to_write = class_ + "," + str(nf) + "," + i + "," + str(d) + "," + str(n) + "," + TN + "," + FP + "," + FN + "," + TP + ","+ TN_p + "," + FP_p + "," + FN_p + "," + TP_p + "," + mean_score
+                            folded_data = fold(df, class_, n_folds=nf,
+                                               disjoint=d)
+                            TN, FP, FN, TP, \
+                                TN_p, FP_p, FN_p, TP_p, mean_score = \
+                                train_folded(folded_data, class_,
+                                             n_folds=nf, image_type=i,
+                                             normalize=n)
 
+                            line_to_write = (class_ + "," + str(nf) +
+                                             "," + i + "," + str(d) +
+                                             "," + str(n) + "," + TN +
+                                             "," + FP + "," + FN + "," +
+                                             TP + "," + TN_p + "," +
+                                             FP_p + "," + FN_p + "," +
+                                             TP_p + "," + mean_score)
                             print("")
                             print(line_to_write)
                             f.write(line_to_write)
@@ -799,35 +826,53 @@ if __name__ == "__main__":
 
     data_frame = populate_data_frame(get_data("../data/"), showplots=False)
 
-    train_all_variations_folded(data_frame, n_f=[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], disjoint=[True], norm=[True], it=['all'])
+    train_all_variations_folded(data_frame,
+                                n_f=[2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                     11, 12, 13, 14, 15, 16, 17,
+                                     18, 19, 20],
+                                disjoint=[True], norm=[True], it=['all'])
 
     # fd = fold(data_frame, 'water', n_folds=5, disjoint=False)
     # for idx in range(len(fd)):
-    #     X_train, X_test, y_train, y_test = train_test_split_folded_data(fd, idx, 'water', image_type='all', normalize=True)
-    #     clf, score, cm, cm_p = train(X_train, X_test, y_train, y_test)
-    #     plot_confusion_matrix_image(data_frame, clf, 'water', image_type='all')
+    #     X_train, X_test, y_train, y_test = \
+    #       train_test_split_folded_data(fd, idx, 'water',
+    #                                    image_type='all',
+    #                                    normalize=True)
+    #     clf, score, cm, cm_p = train(X_train, X_test,
+    #                                  y_train, y_test)
+    #     plot_confusion_matrix_image(data_frame, clf, 'water',
+    #                                 image_type='all')
 
     """     Single fold training
 
-        X, y = get_sample(data_frame, "water", image_type='l' undersample=False, normalize=True)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.2)
+        X, y = get_sample(data_frame, "water", image_type='l'
+                          undersample=False, normalize=True)
+        X_train, X_test, y_train, y_test = \
+                train_test_split(X, y, random_state=0, test_size=0.2)
         clf, score, cm = train(X_train, X_test, y_train, y_test)
     """
 
     """     Single fold training of union classes
 
-        X, y = get_sample(data_frame, ["water", "river"], image_type='all' undersample=False, normalize=True)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.2)
+        X, y = get_sample(data_frame, ["water", "river"],
+                          image_type='all' undersample=False,
+                          normalize=True)
+        X_train, X_test, y_train, y_test = \
+                train_test_split(X, y, random_state=0, test_size=0.2)
         clf, score, cm = train(X_train, X_test, y_train, y_test)
     """
 
     """     Folded data training
 
         folded_data = fold(data_frame, "water", n_folds=10)
-        TN, FP, FN, TP, mean_score = train_folded(folded_data, class_, n_folds=5, image_type='all', normalize=True)
+        TN, FP, FN, TP, mean_score = train_folded(folded_data, class_,
+                                                  n_folds=5,
+                                                  image_type='all',
+                                                  normalize=True)
     """
 
-    """     Testing for folding and training all data with number of fold options built in
+    """ Testing for folding and training all data with number of fold
+            options built in
 
         train_all_variations(data_frame)
     """
@@ -838,4 +883,3 @@ if __name__ == "__main__":
         get_intersection_indices(data_frame, "water", "river")
         folded_data = fold(data_frame, "water", n_folds=10)
     """
-

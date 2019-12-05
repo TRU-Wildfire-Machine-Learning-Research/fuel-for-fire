@@ -7,7 +7,7 @@ import sys
 from misc import *
 
 # don't split files with more than this many labels
-max_labels = 20 
+max_labels = 20
 
 # count files
 n_bin_files, n_lut_files, bin_files_skipped = 0, 0, []
@@ -18,7 +18,7 @@ args, d = sys.argv, None
 if len(args) < 2:
     err('class_split.py [input directory]')
 else:
-    d = args[1].strip(os.path.sep) # input directory
+    d = args[1].strip(os.path.sep)  # input directory
 
 b = d + os.path.sep + "binary"
 print("init binary class folder")
@@ -56,7 +56,7 @@ for f in bin_files:
 
     # default filenames for value: the value
     value_to_name = {value: str(value) for value in count.keys()}
-   
+
     s = ",".join([f, str(samples), str(lines), str(bands)])
     lut_file = d + os.path.sep + w[0] + ".lut"
     if exist(lut_file):
@@ -84,14 +84,15 @@ for f in bin_files:
     else:
         print(s)
 
-    # write a file for each observed value 
+    # write a file for each observed value
     for c in count.keys():
         of = None
         try:
-            of =  b + os.path.sep + f_short[0:-4] + '_eq_' + value_to_name[c] 
-        except:
+            of = b + os.path.sep + f_short[0:-4] + '_eq_' + value_to_name[c]
+        except Exception:
             print("value_to_name", str(value_to_name))
-            err("lookup not found:" + str(c) + " count.keys():" + str(count.keys()))
+            err("lookup not found:" + str(c) +
+                " count.keys():" + str(count.keys()))
         ofn, hfn = of + ".bin", of + ".hdr"
         output = copy.deepcopy(data)
         for i in range(0, len(data)):
@@ -99,10 +100,6 @@ for f in bin_files:
         write_binary(output, ofn)
         write_hdr(hfn, samples, lines, bands)
         n_files_written += 1
-    
-    
-    #for value 
-
 
 # if there is a lut, check it matches
 
