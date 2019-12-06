@@ -22,6 +22,12 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
+'''
+partial setup instructions for ubuntu 18:
+  python3 -m pip install pandas
+  python3 -m pip install rasterio
+  python3 -m pip install --upgrade pytest
+'''
 
 # these guys can be read off the input data variable:
 lines = 401  # y dimension
@@ -385,7 +391,7 @@ def get_intersection_indices(df, col1, col2):
     """
     col1b = col1 + "_bool"
     col2b = col2 + "_bool"
-    indices = df.loc[df[col1b] & df[col2b] is True].index.values
+    indices = df.loc[df[col1b] & df[col2b]].index.values
     print("Intersection of", col1, "and", col2, len(indices))
     return indices
 
@@ -707,11 +713,14 @@ def fold(data_frame, class_, n_folds=5, disjoint=False):
 
     cd = create_class_dictionary(data_frame)
 
-    # Retrieve the original data
+    # Retrieve the original data. Does .copy() do anything after the slice?
     class_ = cd[class_]
-    X_true = data_frame[data_frame[class_] is True].copy()
-    X_false = data_frame[data_frame[class_]
-                         is False].copy()
+    X_true = data_frame[data_frame[class_]].copy()
+    print("class_", type(class_))
+    print("type", type(data_frame[class_]))
+    print("df.shape", data_frame.shape)
+    print("X_true.shape", X_true.shape)
+    X_false = data_frame[~ data_frame[class_]].copy()
 
     # Decide which class needs to take a subset
     if len(X_true) < len(X_false):
@@ -779,8 +788,14 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
 
 def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
                                 norm=[True], it=[all]):
-    newpath = "../log/folded_classifier/" + get_date_string()
-    os.mkdir(newpath)
+    newpath = "log/folded_classifier/" + get_date_string()
+
+    # recursively create folder if not exist yet
+    w = newpath.split(os.path.sep)
+    for i in range(1, len(w)):
+        p = (os.path.sep).join(w[0: i])
+        if not os.path.exists(p):
+            os.mkdir(p)
     cd = create_class_dictionary(df)
 
     for class_ in cd.keys():
@@ -823,8 +838,10 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
 """
 
 if __name__ == "__main__":
-
-    data_frame = populate_data_frame(get_data("../data/"), showplots=False)
+    data_folder = "data_bcgw"
+    if not os.path.exists(data_folder) or not os.path.isdir("data_bcgw"):
+        err("please run from fuel-for-fire/ folder")
+    data_frame = populate_data_frame(get_data("data_bcgw/"), showplots=False)
 
     train_all_variations_folded(data_frame,
                                 n_f=[2, 3, 4, 5, 6, 7, 8, 9, 10,
