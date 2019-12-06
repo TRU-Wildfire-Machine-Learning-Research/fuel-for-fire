@@ -716,10 +716,6 @@ def fold(data_frame, class_, n_folds=5, disjoint=False):
     # Retrieve the original data. Does .copy() do anything after the slice?
     class_ = cd[class_]
     X_true = data_frame[data_frame[class_]].copy()
-    print("class_", type(class_))
-    print("type", type(data_frame[class_]))
-    print("df.shape", data_frame.shape)
-    print("X_true.shape", X_true.shape)
     X_false = data_frame[~ data_frame[class_]].copy()
 
     # Decide which class needs to take a subset
@@ -788,7 +784,7 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
 
 def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
                                 norm=[True], it=[all]):
-    newpath = "log/folded_classifier/" + get_date_string()
+    newpath = "log/folded_classifier_" + get_date_string()
 
     # recursively create folder if not exist yet
     w = newpath.split(os.path.sep)
@@ -797,36 +793,33 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
         if not os.path.exists(p):
             os.mkdir(p)
     cd = create_class_dictionary(df)
-
+    f = open(newpath + "results.csv", "wb")
+    f.write(("Class,N_Folds,Image_Type,Disjoint,Normalize," +
+                    "TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy").encode())
     for class_ in cd.keys():
-        with open(newpath + class_ + "_results.csv", 'w') as f:
-
-            f.write("Class,N_Folds,Image_Type,Disjoint,Normalize," +
-                    "TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy")
-            f.write("\n")
-            for nf in n_f:
-                for d in disjoint:
-                    for n in norm:
-                        for i in it:
-                            folded_data = fold(df, class_, n_folds=nf,
+        for nf in n_f:
+            for d in disjoint:
+                for n in norm:
+                    for i in it:
+                        folded_data = fold(df, class_, n_folds=nf,
                                                disjoint=d)
-                            TN, FP, FN, TP, \
-                                TN_p, FP_p, FN_p, TP_p, mean_score = \
-                                train_folded(folded_data, class_,
+                        TN, FP, FN, TP, \
+                            TN_p, FP_p, FN_p, TP_p, mean_score = \
+                            train_folded(folded_data, class_,
                                              n_folds=nf, image_type=i,
                                              normalize=n)
 
-                            line_to_write = (class_ + "," + str(nf) +
+                        line_to_write = ('\n' + class_ + "," + str(nf) +
                                              "," + i + "," + str(d) +
                                              "," + str(n) + "," + TN +
                                              "," + FP + "," + FN + "," +
                                              TP + "," + TN_p + "," +
                                              FP_p + "," + FN_p + "," +
                                              TP_p + "," + mean_score)
-                            print("")
-                            print(line_to_write)
-                            f.write(line_to_write)
-                            f.write("\n")
+                        print("")
+                        print(line_to_write)
+                        f.write(line_to_write.encode())
+                        #f.write("\n")
 
 
 """
