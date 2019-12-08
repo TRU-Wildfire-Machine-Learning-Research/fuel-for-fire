@@ -4,6 +4,7 @@ import math
 import copy
 import datetime
 import numpy as np
+from misc import *
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import rasterio
@@ -41,18 +42,15 @@ def get_data(fp):
 
         returns a list of file paths to .bin files
     """
-
-    if not os.path.exists(fp):
-        print("Error: couldn't find path:\n\t" + fp)
-        sys.exit(1)
-
     rasterBin = []
-    for root, dirs, files in os.walk(fp, topdown=False):
-        for file in files:
-            if ".hdr" not in file:
-                rasterBin.append(os.path.join(fp, file))
+    for f in fp:
+        if not exist(f):
+            err("couldn't find path:\n\t" + f)
 
-    print("files retrieved")
+        for root, dirs, files in os.walk(f, topdown=False):
+            for file in files:
+                if ".hdr" not in file:
+                    rasterBin.append(os.path.join(f, file))
     return rasterBin
 
 
@@ -124,63 +122,90 @@ def populate_data_frame(rasterBin, showplots=False):
         'exposed_val',
         'exposed_bool'))
     '''
+    print("putting stuff in data_Frame:")
     for raster in rasterBin:
-        name = raster.split(".")[0]
-        if "S2A.bin_4x.bin_sub.bin" in raster:
+        name = raster.split(os.path.sep)[-1].split(".")[0]
+        if "S2A" in name:
             dataset = rasterio.open(raster)
             for idx in dataset.indexes:
-                data_frame.iloc[:, idx-1] = dataset.read(idx).ravel()
+                print(name + "_" + str(idx))
+                data_frame[name + "_" + str(idx)] = dataset.read(idx).ravel()
 
-        elif "L8.bin_4x.bin_sub.bin" in raster:
+        elif "L8" in name:
             dataset = rasterio.open(raster)
             for idx in dataset.indexes:
-                data_frame.iloc[:, idx+11] = dataset.read(idx).ravel()
+                print(name + "_" + str(idx))
+                data_frame[name + "_" + str(idx)] = dataset.read(idx).ravel()
 
-        elif "WATERSP.tif_project_4x.bin_sub.bin" in raster:
+        elif "WATERSP" in name:
             water = rasterio.open(raster).read(1)
+            print('water_val')
             data_frame['water_val'] = water.ravel()
+            print('water_bool')
             data_frame['water_bool'] = data_frame['water_val'] != 128
-
-        elif "RiversSP.tif_project_4x.bin_sub.bin" in raster:
+            
+        elif "RiversSP" in name:
             river = rasterio.open(raster).read(1)
+            print('river_val')
             data_frame['river_val'] = river.ravel()
+            print('river_bool')
             data_frame['river_bool'] = data_frame['river_val'] == 1.0
 
-        elif "BROADLEAF_SP.tif_project_4x.bin_sub.bin" in raster:
+        elif "BROADLEAF_SP" in name:
             broadleaf = rasterio.open(raster).read(1)
+            print('broadleaf_val')
             data_frame['broadleaf_val'] = broadleaf.ravel()
+            print('broadleaf_bool')
             data_frame['broadleaf_bool'] = data_frame['broadleaf_val'] == 1.0
 
-        elif "SHRUB_SP.tif_project_4x.bin_sub.bin" in raster:
+        elif "SHRUB_SP" in name:
             shrub = rasterio.open(raster).read(1)
+            print('shrub_val')
             data_frame['shrub_val'] = shrub.ravel()
+            print('shrub_bool')
             data_frame['shrub_bool'] = data_frame['shrub_val'] != 0.0
 
-        elif "MIXED_SP.tif_project_4x.bin_sub.bin" in raster:
+        elif "MIXED_SP" in name:
             mixed = rasterio.open(raster).read(1)
+            print('mixed_val')
             data_frame['mixed_val'] = mixed.ravel()
+            print('mixed_bool')
             data_frame['mixed_bool'] = data_frame['mixed_val'] != 0.0
 
-        elif "CONIFER_SP.tif_project_4x.bin_sub.bin" in raster:
+        elif "CONIFER_SP" in name:
             conifer = rasterio.open(raster).read(1)
+            print('conifer_val')
             data_frame['conifer_val'] = conifer.ravel()
+            print('conifer_bool')
             data_frame['conifer_bool'] = data_frame['conifer_val'] != 0.0
 
-        elif "HERB_GRAS_SP.tif_project_4x.bin_sub.bin" in raster:
+        elif "HERB_GRAS_SP" in name:
             herb = rasterio.open(raster).read(1)
+            print('herb_val')
             data_frame['herb_val'] = herb.ravel()
+            print('herb_bool')
             data_frame['herb_bool'] = data_frame['herb_val'] != 0.0
 
-        elif "CCUTBL_SP.tif_project_4x.bin_sub.bin" in raster:
+        elif "CCUTBL_SP" in name:
             clearcut = rasterio.open(raster).read(1)
+            print('clearcut_val')
             data_frame['clearcut_val'] = clearcut.ravel()
+            print('clearcut_bool')
             data_frame['clearcut_bool'] = data_frame['clearcut_val'] != 0.0
 
-        elif "EXPOSED_SP.tif_project_4x.bin_sub.bin" in raster:
+        elif "EXPOSED_SP" in name:
             exposed = rasterio.open(raster).read(1)
+            print('exposed_val')
             data_frame['exposed_val'] = exposed.ravel()
+            print('exposed_bool')
             data_frame['exposed_bool'] = data_frame['exposed_val'] != 0.0
-
+        else:
+            layer = rasterio.open(raster)#.read(1)
+            if len(layer.indexes) > 1:
+                err("expected one band only")
+            layer = rasterio.open(raster).read(1)
+            print(name)
+    sys.exit(1)
     if showplots:
         show_original_image(data_frame, 'l')
         show_original_image(data_frame, 's')
@@ -839,7 +864,10 @@ if __name__ == "__main__":
     data_folder = "data_bcgw"
     if not os.path.exists(data_folder) or not os.path.isdir("data_bcgw"):
         err("please run from fuel-for-fire/ folder")
-    data_frame = populate_data_frame(get_data("data_bcgw/"), showplots=False)
+    data_frame = populate_data_frame(get_data(["data_img/",
+                                               "data_bcgw/",
+                                               "data_vri/binary/"]),
+                                               showplots=False)
     
     data = train_all_variations_folded(data_frame,
                                        n_f=range(2, 21),
