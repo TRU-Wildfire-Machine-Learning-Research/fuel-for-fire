@@ -80,7 +80,8 @@ def populate_data_frame(rasterBin, showplots=False):
 
         Returns a populated pandas dataframe.
     """
-    data_frame = pd.DataFrame(columns=(
+    data_frame = pd.DataFrame()
+    '''columns=(
         'S2_coastal_aerosol',
         'S2_blue',
         'S2_green',
@@ -122,11 +123,10 @@ def populate_data_frame(rasterBin, showplots=False):
         'clearcut_bool',
         'exposed_val',
         'exposed_bool'))
-
+    '''
     for raster in rasterBin:
-
+        name = raster.split(".")[0]
         if "S2A.bin_4x.bin_sub.bin" in raster:
-
             dataset = rasterio.open(raster)
             for idx in dataset.indexes:
                 data_frame.iloc[:, idx-1] = dataset.read(idx).ravel()
@@ -571,8 +571,8 @@ def train(X_train, X_test, y_train, y_test):
     """sklearn SGDClassifier
 
     """
-    sgd_clf = SGDClassifier(
-        random_state=42, verbose=False, max_iter=1000, tol=1.e-3)
+    sgd_clf = SGDClassifier(random_state=42, verbose=False,
+                            max_iter=1000, tol=1.e-3)
 
     np.set_printoptions(precision=3)
 
@@ -670,7 +670,7 @@ def calculate_mean_metrics(cm_list, n_folds, total_score, percentage=False):
 
 
 def build_folds(X_true, X_false, n_folds):
-
+    # https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation
     # size
     size = len(X_true) * 2
     fold_size = int(math.floor(size/n_folds))
@@ -779,7 +779,7 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
     TN_p, FP_p, FN_p, TP_p, mean_score = \
         calculate_mean_metrics(cm_p_list, len(folded_data), total_score,
                                True)
-    return TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score
+    return TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf
 
 
 def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
@@ -796,6 +796,8 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
     f = open(newpath + "results.csv", "wb")
     f.write(("Class,N_Folds,Image_Type,Disjoint,Normalize," +
                     "TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy").encode())
+
+    data = []
     for class_ in cd.keys():
         for nf in n_f:
             for d in disjoint:
@@ -804,7 +806,7 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
                         folded_data = fold(df, class_, n_folds=nf,
                                                disjoint=d)
                         TN, FP, FN, TP, \
-                            TN_p, FP_p, FN_p, TP_p, mean_score = \
+                            TN_p, FP_p, FN_p, TP_p, mean_score, clf = \
                             train_folded(folded_data, class_,
                                              n_folds=nf, image_type=i,
                                              normalize=n)
@@ -820,6 +822,9 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
                         print(line_to_write)
                         f.write(line_to_write.encode())
                         #f.write("\n")
+                        data.append([TN, FP, FN, TP, \
+                            TN_p, FP_p, FN_p, TP_p, mean_score, clf])
+    return data
 
 
 """
@@ -835,13 +840,18 @@ if __name__ == "__main__":
     if not os.path.exists(data_folder) or not os.path.isdir("data_bcgw"):
         err("please run from fuel-for-fire/ folder")
     data_frame = populate_data_frame(get_data("data_bcgw/"), showplots=False)
-
-    train_all_variations_folded(data_frame,
-                                n_f=[2, 3, 4, 5, 6, 7, 8, 9, 10,
-                                     11, 12, 13, 14, 15, 16, 17,
-                                     18, 19, 20],
-                                disjoint=[True], norm=[True], it=['all'])
-
+    
+    data = train_all_variations_folded(data_frame,
+                                       n_f=range(2, 21),
+                                        disjoint=[True],
+                                        norm=[True],
+                                        it=['all'])
+    
+    for d in data:
+        print("d", d)
+        [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf] = d
+        print("clf", clf)
+    
     # fd = fold(data_frame, 'water', n_folds=5, disjoint=False)
     # for idx in range(len(fd)):
     #     X_train, X_test, y_train, y_test = \
@@ -854,7 +864,7 @@ if __name__ == "__main__":
     #                                 image_type='all')
 
     """     Single fold training
-
+    
         X, y = get_sample(data_frame, "water", image_type='l'
                           undersample=False, normalize=True)
         X_train, X_test, y_train, y_test = \
@@ -888,7 +898,6 @@ if __name__ == "__main__":
     """
 
     """     Other useful functions
-
         plot_confusion_matrix_image(data_frame, clf, "water", image_type="all")
         get_intersection_indices(data_frame, "water", "river")
         folded_data = fold(data_frame, "water", n_folds=10)
