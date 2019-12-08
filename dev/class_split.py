@@ -77,7 +77,7 @@ for f in bin_files:
             if value not in count:
                 err("lookup failed")
             # use lut value if available
-            value_to_name[value] = lookup[value].strip()
+            value_to_name[value] = lookup[value].strip().replace(" ", "_")
 
         n_lut_files += 1
         print(s, lut_file)
