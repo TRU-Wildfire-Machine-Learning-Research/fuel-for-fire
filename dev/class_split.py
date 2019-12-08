@@ -60,8 +60,8 @@ for f in bin_files:
     s = ",".join([f, str(samples), str(lines), str(bands)])
     lut_file = d + os.path.sep + w[0] + ".lut"
     if exist(lut_file):
-        lines, lookup = open(lut_file).readlines(), {}
-        for line in lines:
+        rlines, lookup = open(lut_file).readlines(), {}
+        for line in rlines:
             w = line.strip().split(",")
             lookup[float(w[1])] = w[0]
 
@@ -77,7 +77,9 @@ for f in bin_files:
             if value not in count:
                 err("lookup failed")
             # use lut value if available
-            value_to_name[value] = lookup[value].strip().replace(" ", "_")
+            v = lookup[value]
+            v = "_".join(v.strip().split())
+            value_to_name[value] = v # lookup[value].strip().replace(" ", "_")
 
         n_lut_files += 1
         print(s, lut_file)
