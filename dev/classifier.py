@@ -967,34 +967,43 @@ if __name__ == "__main__":
     if exist("data_vri/") and not exist("data_vri/binary/"):
         run("python3 dev/class_split.py data_vri/")
 
-    dirs = ["data_img/", "data_bcgw/", "data_vri/binary/"]
-
+    dirs, data = ["data_img/", "data_bcgw/", "data_vri/binary/"], None
+    
     data_frame = populate_data_frame(get_data(dirs),
                                      showplots=False)
 
-    '''
-    data = train_all_variations_folded(data_frame,
-                                       n_f=range(2, 21),
-                                        disjoint=[True],
-                                        norm=[True],
-                                        it=['all'])
-    '''
-    data = train_all_variations_folded(data_frame,
-                                       n_f=[2, 5, 10],
-                                       # range(2, 21),
-                                       disjoint=[False],
-                                       norm=[True],
-                                       it=['all'])
+    if not exist('data.pkl'):
+        '''
+        data = train_all_variations_folded(data_frame,
+                                           n_f=range(2, 21),
+                                           disjoint=[True],
+                                           norm=[True],
+                                           it=['all'])
+        '''
+        data = train_all_variations_folded(data_frame,
+                                           n_f=[2, 5, 10],
+                                           # range(2, 21),
+                                           disjoint=[False],
+                                           norm=[True],
+                                           it=['all'])
 
-    # exit
-    sys.exit(0)
+        import pickle
+        pickle.dump(data, open('data.pkl', 'wb'))
+    else:
+        import pickle
+        data = pickle.load(open('data.pkl', 'rb'))
 
     # ash was hoping to output class maps from the data next
     for d in data:
         print("d", d)
         [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p,
-         mean_score, precision, clf, params] = d
+         accuracy, precision, clf, params] = d
         print("clf", clf)
+
+
+        # unpack params
+        class_, nf, d, n, i = params
+
 
     # fd = fold(data_frame, 'water', n_folds=5, disjoint=False)
     # for idx in range(len(fd)):
