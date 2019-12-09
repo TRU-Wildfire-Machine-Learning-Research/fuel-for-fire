@@ -4,8 +4,8 @@ import math
 import copy
 import time
 import datetime
-import numpy as np
 from misc import *
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import rasterio
@@ -34,7 +34,8 @@ partial setup instructions for ubuntu 18:
 global data_frame
 data_frame = None  # global variable for data frame (need for parallelism)
 # assume data dimensions are the same for every input file
-lines, samples = None, None # read these from header file
+lines, samples = None, None  # read these from header file
+
 
 def get_data(fp):
     """Assumes the filepath provided contains both
@@ -145,7 +146,6 @@ def populate_data_frame(rasterBin, showplots=False):
                     str(samples2) + "x" + str(lines2) + ', expected: ' +
                     str(samples) + 'x' + str(lines))
 
-
         if "S2A" in name:
             dataset = rasterio.open(raster)
             for idx in dataset.indexes:
@@ -164,7 +164,7 @@ def populate_data_frame(rasterBin, showplots=False):
             data_frame['water_val'] = water.ravel()
             print('water_bool')
             data_frame['water_bool'] = data_frame['water_val'] != 128
-            
+
         elif "RiversSP" in name:
             river = rasterio.open(raster).read(1)
             print('river_val')
@@ -245,10 +245,10 @@ def populate_data_frame(rasterBin, showplots=False):
 
                 print(len(counts), name, counts)
                 data_frame[name] = d
-            
+
                 print(name + '_bool')
                 data_frame[name + '_bool'] = data_frame[name] != 0.
-    
+
     if showplots:
         show_original_image(data_frame, 'l')
         show_original_image(data_frame, 's')
@@ -267,8 +267,8 @@ def create_image_array(df, class_):
         returns a ndarray.
 
         Comment:
-          in future, might find it simpler to use numpy array 
-        for everything (i.e., init one numpy array for each 
+          in future, might find it simpler to use numpy array
+        for everything (i.e., init one numpy array for each
         input file). That way, don't need methods to convert
         between data types!
     """
@@ -382,9 +382,10 @@ def get_x_data(df, image_type):
     if image_type == "all":
         X = df.loc[:, :'L8_11']  # :"L8_longwave_infrared2"]
     elif image_type == "s":
-        X = df.loc[:, :'S2A_12']  #:"S2_swir2"]
+        X = df.loc[:, :'S2A_12']  # :"S2_swir2"]
     elif image_type == "l":
-        X = df.loc[:, 'L8_1': 'L8_11']  # "L8_coastal_aerosol": "L8_longwave_infrared2"]
+        X = df.loc[:, 'L8_1': 'L8_11']
+        # "L8_coastal_aerosol": "L8_longwave_infrared2"]
     return X
 
 
@@ -562,12 +563,12 @@ def print_classifier_metrics(y_test, y_pred):
         for arr in cm:
             print(arr)
     cm_p = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    
+
     if debug:
         print("")
         for arr in cm:
             print(arr)
-    
+
     return cm, cm_p
 
 
@@ -668,9 +669,9 @@ def train(X_train, X_test, y_train, y_test):
     if debug:
         print("\n{:*^30}\n".format("Training complete"))
     score = "{:.3f}".format(sgd_clf.score(X_test, y_test))
-   
+
     if debug:
-       print("Test score:", score)
+        print("Test score:", score)
 
     cm, cm_p = print_classifier_metrics(y_test, y_pred)
     return sgd_clf, score, cm, cm_p
@@ -731,10 +732,10 @@ def train_all_variations(df):
 
 def calculate_mean_metrics(cm_list, n_folds, total_score, percentage=False):
     debug = False
-    
+
     if debug:
         print("Calculating Mean Metrics")
-    
+
     TN, FP, FN, TP = 0., 0., 0., 0.
     for conf_matrix in cm_list:
         TN = TN + conf_matrix[0, 0]
@@ -748,8 +749,8 @@ def calculate_mean_metrics(cm_list, n_folds, total_score, percentage=False):
     FNstr = "{:.3f}".format(FN/n_folds)
     TPstr = "{:.3f}".format(TP/n_folds)
     mean_score = "{:.3f}".format(total_score/n_folds)
-    
-    if debug:  
+
+    if debug:
         print("TN:", TNstr)
         print("FP:", FPstr)
         print("FN:", FNstr)
@@ -788,7 +789,7 @@ def build_folds(X_true, X_false, n_folds):
     folds[0] = folds[0].append(fold)
 
     debug = False
-    
+
     if debug:
         print("{:/^30}".format("Data Folded"))
         print("Number of Folds:", n_folds)
@@ -874,7 +875,7 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
                                True)
 
     # add precision
-    precision = "{:.3f}".format(float(TP) / (float(TP) + float(FP))) 
+    precision = "{:.3f}".format(float(TP) / (float(TP) + float(FP)))
     return [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf]
 
 
@@ -893,14 +894,15 @@ def train_variation(params):
         train_folded(folded_data, class_,
                      n_folds=nf, image_type=i,
                      normalize=n)
-    result = [TN, FP, FN, TP, \
-            TN_p, FP_p, FN_p, TP_p, \
-            mean_score, precision, clf, params]
+    result = [TN, FP, FN, TP,
+              TN_p, FP_p, FN_p, TP_p,
+              mean_score, precision, clf, params]
     print(result)
     if len(result) != 12:
         err("result")
 
     return(result)
+
 
 def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
                                 norm=[True], it=[all]):
@@ -933,8 +935,8 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
     # now write the log files etc.
     for result in data:
         print("result", result)
-        [TN, FP, FN, TP, \
-         TN_p, FP_p, FN_p, TP_p, \
+        [TN, FP, FN, TP,
+         TN_p, FP_p, FN_p, TP_p,
          accuracy, precision, clf, params] = result
 
         # unpack params
@@ -949,7 +951,8 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
         print(line_to_write)
         f.write(line_to_write.encode())
 
-    print(len(runs), "models fit in", t1 - t0, "seconds,", (t1 - t0) / len(runs), "seconds per model")
+    print(len(runs), "models fit in", t1 - t0, "seconds,",
+          (t1 - t0) / len(runs), "seconds per model")
     return data
 
 
@@ -957,18 +960,18 @@ if __name__ == "__main__":
     data_folder = "data_bcgw"
 
     if not exist(data_folder) or not os.path.isdir(data_folder):
-        err("please run from fuel-for-fire/ folder, with 20191207data.tar.gz extracted there")
-    
+        err("please run from fuel-for-fire/ folder," +
+            " with 20191207data.tar.gz extracted there")
 
-    # split up the new ground reference files, by value, resulting in binary maps
+    # split up new ground reference files, by value, result: binary maps
     if exist("data_vri/") and not exist("data_vri/binary/"):
         run("python3 dev/class_split.py data_vri/")
 
-    data_frame = populate_data_frame(get_data(["data_img/",
-                                               "data_bcgw/",
-                                               "data_vri/binary/"]),
-                                               showplots=False)
-    
+    dirs = ["data_img/", "data_bcgw/", "data_vri/binary/"]
+
+    data_frame = populate_data_frame(get_data(dirs),
+                                     showplots=False)
+
     '''
     data = train_all_variations_folded(data_frame,
                                        n_f=range(2, 21),
@@ -977,20 +980,22 @@ if __name__ == "__main__":
                                         it=['all'])
     '''
     data = train_all_variations_folded(data_frame,
-                                       n_f=[2, 5, 10], #range(2, 21),
-                                        disjoint=[False],
-                                        norm=[True],
-                                        it=['all'])
-    
+                                       n_f=[2, 5, 10],
+                                       # range(2, 21),
+                                       disjoint=[False],
+                                       norm=[True],
+                                       it=['all'])
+
     # exit
     sys.exit(0)
 
     # ash was hoping to output class maps from the data next
     for d in data:
         print("d", d)
-        [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf, params] = d
+        [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p,
+         mean_score, precision, clf, params] = d
         print("clf", clf)
-    
+
     # fd = fold(data_frame, 'water', n_folds=5, disjoint=False)
     # for idx in range(len(fd)):
     #     X_train, X_test, y_train, y_test = \
@@ -1003,7 +1008,7 @@ if __name__ == "__main__":
     #                                 image_type='all')
 
     """     Single fold training
-    
+
         X, y = get_sample(data_frame, "water", image_type='l'
                           undersample=False, normalize=True)
         X_train, X_test, y_train, y_test = \

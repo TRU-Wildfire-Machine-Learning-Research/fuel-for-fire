@@ -79,7 +79,7 @@ for f in bin_files:
             # use lut value if available
             v = lookup[value]
             v = "_".join(v.strip().split())
-            value_to_name[value] = v # lookup[value].strip().replace(" ", "_")
+            value_to_name[value] = v  # lookup[value].strip().replace(" ", "_")
 
         n_lut_files += 1
         print(s, lut_file)
