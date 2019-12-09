@@ -729,11 +729,12 @@ def train_all_variations(df):
 
 
 def calculate_mean_metrics(cm_list, n_folds, total_score, percentage=False):
-    print("Calculating Mean Metrics")
-    TN = 0.0
-    FP = 0.0
-    FN = 0.0
-    TP = 0.0
+    debug = False
+    
+    if debug:
+        print("Calculating Mean Metrics")
+    
+    TN, FP, FN, TP = 0., 0., 0., 0.
     for conf_matrix in cm_list:
         TN = TN + conf_matrix[0, 0]
         FP = FP + conf_matrix[0, 1]
@@ -745,13 +746,15 @@ def calculate_mean_metrics(cm_list, n_folds, total_score, percentage=False):
     FPstr = "{:.3f}".format(FP/n_folds)
     FNstr = "{:.3f}".format(FN/n_folds)
     TPstr = "{:.3f}".format(TP/n_folds)
-
     mean_score = "{:.3f}".format(total_score/n_folds)
-    print("TN:", TNstr)
-    print("FP:", FPstr)
-    print("FN:", FNstr)
-    print("TP:", TPstr)
-    print("MeanScore:", mean_score)
+    
+    if debug:  
+        print("TN:", TNstr)
+        print("FP:", FPstr)
+        print("FN:", FNstr)
+        print("TP:", TPstr)
+        print("MeanScore:", mean_score)
+
     return TNstr, FPstr, FNstr, TPstr, mean_score
 
 
@@ -783,10 +786,13 @@ def build_folds(X_true, X_false, n_folds):
     fold = concatenate_dataframes(X_true, X_false)
     folds[0] = folds[0].append(fold)
 
-    print("{:/^30}".format("Data Folded"))
-    print("Number of Folds:", n_folds)
-    print("Size of each fold:", str(fold_size))
-    print("Leftover datapoints added to fold 0:", len(fold))
+    debug = False
+    
+    if debug:
+        print("{:/^30}".format("Data Folded"))
+        print("Number of Folds:", n_folds)
+        print("Size of each fold:", str(fold_size))
+        print("Leftover datapoints added to fold 0:", len(fold))
 
     return folds
 
