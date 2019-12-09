@@ -76,7 +76,6 @@ def populate_data_frame(rasterBin, showplots=False):
         Showplots argument added to visualize the raw data
         and the truth data.
 
-
         Returns a populated pandas dataframe.
     """
     data_frame = pd.DataFrame()
@@ -245,7 +244,7 @@ def populate_data_frame(rasterBin, showplots=False):
                 print(name + '_bool')
                 data_frame[name + '_bool'] = data_frame[name] != 0.
     
-        # remove the later!
+        # remove this later!
         if len(data_frame.columns) > 50:
             break
     
