@@ -102,10 +102,10 @@ def hist(data):
         count[d] = 1 if d not in count else count[d] + 1
     return count
 
-# parallel for loop!
+
 def parfor(my_function, my_inputs):
-  # evaluate a function in parallel, and collect the results
-  import multiprocessing as mp
-  pool = mp.Pool(mp.cpu_count())
-  result = pool.map(my_function, my_inputs)
-  return(result)
+    # evaluate a function in parallel, and collect the results
+    import multiprocessing as mp
+    pool = mp.Pool(mp.cpu_count())
+    result = pool.map(my_function, my_inputs)
+    return(result)
