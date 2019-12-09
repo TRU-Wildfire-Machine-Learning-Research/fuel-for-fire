@@ -226,6 +226,10 @@ def populate_data_frame(rasterBin, showplots=False):
                 err("expected one band only")
             layer = rasterio.open(raster).read(1)
 
+            # pragmatic programming: make sure "bool" isn't in filename already
+            if 'bool' in name:
+                err('unexpected "bool" in filename')
+
             # pragmatic programming: make sure no name collision
             if name in data_frame:
                 err(name + " already in data_frame")
@@ -546,17 +550,23 @@ def print_classifier_metrics(y_test, y_pred):
     """
 
     """
+    debug = False
+
     cm = confusion_matrix(y_test, y_pred)
 
-    print("Confusion Matrix")
-    print("[tn fp]")
-    print("[fn tp]\n")
-    for arr in cm:
-        print(arr)
+    if debug:
+        print("Confusion Matrix")
+        print("[tn fp]")
+        print("[fn tp]\n")
+        for arr in cm:
+            print(arr)
     cm_p = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    print("")
-    for arr in cm:
-        print(arr)
+    
+    if debug:
+        print("")
+        for arr in cm:
+            print(arr)
+    
     return cm, cm_p
 
 
@@ -639,6 +649,7 @@ def rescale(arr, two_percent=True):
 
 
 def train(X_train, X_test, y_train, y_test):
+    debug = False
     """sklearn SGDClassifier
 
     """
@@ -647,14 +658,18 @@ def train(X_train, X_test, y_train, y_test):
 
     np.set_printoptions(precision=3)
 
-    print("\n\nBegin Fitting SGD\n")
+    if debug:
+        print("\n\nBegin Fitting SGD\n")
 
     sgd_clf = sgd_clf.fit(X_train, y_train)
     y_pred = sgd_clf.predict(X_test)
 
-    print("\n{:*^30}\n".format("Training complete"))
+    if debug:
+        print("\n{:*^30}\n".format("Training complete"))
     score = "{:.3f}".format(sgd_clf.score(X_test, y_test))
-    print("Test score:", score)
+   
+    if debug:
+       print("Test score:", score)
 
     cm, cm_p = print_classifier_metrics(y_test, y_pred)
     return sgd_clf, score, cm, cm_p
