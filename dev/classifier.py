@@ -853,7 +853,7 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
     TN_p, FP_p, FN_p, TP_p, mean_score = \
         calculate_mean_metrics(cm_p_list, len(folded_data), total_score,
                                True)
-    return TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf
+    return [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf]
 
 
 def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
@@ -869,37 +869,55 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
     cd = create_class_dictionary(df)
     f = open(newpath + "results.csv", "wb")
     f.write(("Class,N_Folds,Image_Type,Disjoint,Normalize," +
-                    "TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy").encode())
+             "TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy").encode())
 
-    data = []
+    runs = []   # input combinations
     for class_ in cd.keys():
         for nf in n_f:
             for d in disjoint:
                 for n in norm:
                     for i in it:
-                        folded_data = fold(df, class_, n_folds=nf,
-                                               disjoint=d)
-                        TN, FP, FN, TP, \
-                            TN_p, FP_p, FN_p, TP_p, mean_score, clf = \
+                        runs.append([class_, nf, d, n, i]) # folded_data, class_, nf, i, n])
+
+    # local function: execute this in parallel
+    def train_variation(params):
+        # unpack input parameters
+        class_, nf, d, n, i = params
+        
+        # selection
+        folded_data = fold(df, class_, n_folds=nf, disjoint=d)
+
+        # training
+        TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf = \
                             train_folded(folded_data, class_,
-                                             n_folds=nf, image_type=i,
-                                             normalize=n)
+                                         n_folds=nf, image_type=i,
+                                         normalize=n)
+        return [TN, FP, FN, TP, \
+                TN_p, FP_p, FN_p, TP_p, \
+                mean_score, clf, params]
+     
+    # outputs, one for each input combo
+    data = parfor(train_variation, runs)
 
-                        line_to_write = ('\n' + class_ + "," + str(nf) +
-                                             "," + i + "," + str(d) +
-                                             "," + str(n) + "," + TN +
-                                             "," + FP + "," + FN + "," +
-                                             TP + "," + TN_p + "," +
-                                             FP_p + "," + FN_p + "," +
-                                             TP_p + "," + mean_score)
-                        print("")
-                        print(line_to_write)
-                        f.write(line_to_write.encode())
-                        #f.write("\n")
-                        data.append([TN, FP, FN, TP, \
-                            TN_p, FP_p, FN_p, TP_p, mean_score, clf])
+    for result in data:
+        [TN, FP, FN, TP, \
+         TN_p, FP_p, FN_p, TP_p, \
+         mean_score, clf, params] = result
+
+        class_, nf, d, n, i = params
+        
+        line_to_write = ('\n' + class_ + "," + str(nf) + "," +
+                         i + "," + str(d) + "," + str(n) + "," + TN +
+                         "," + FP + "," + FN + "," + TP + "," + TN_p +
+                         "," + FP_p + "," + FN_p + "," + TP_p + "," +
+                         mean_score)
+
+        print("")
+        print(line_to_write)
+        f.write(line_to_write.encode())
+        data.append([TN, FP, FN, TP, \
+                     TN_p, FP_p, FN_p, TP_p, mean_score, clf])
     return data
-
 
 """
         LIST OF THE AVAILABLE DATA NOT INVESTIGATED
