@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import copy
+import time
 import datetime
 import numpy as np
 from misc import *
@@ -871,7 +872,10 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
     TN_p, FP_p, FN_p, TP_p, mean_score = \
         calculate_mean_metrics(cm_p_list, len(folded_data), total_score,
                                True)
-    return [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf]
+
+    # add precision
+    precision = "{:.3f}".format(float(TP) / (float(TP) + float(FP))) 
+    return [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf]
 
 
 # execute this in parallel
@@ -885,14 +889,15 @@ def train_variation(params):
     folded_data = fold(data_frame, class_, n_folds=nf, disjoint=d)
 
     # training
-    TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf = \
+    TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf = \
         train_folded(folded_data, class_,
                      n_folds=nf, image_type=i,
                      normalize=n)
     result = [TN, FP, FN, TP, \
             TN_p, FP_p, FN_p, TP_p, \
-            mean_score, clf, params]
-    if len(result) != 11:
+            mean_score, precision, clf, params]
+    print(result)
+    if len(result) != 12:
         err("result")
 
     return(result)
@@ -910,7 +915,7 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
     cd = create_class_dictionary(df)
     f = open(newpath + "results.csv", "wb")
     f.write(("Class,N_Folds,Image_Type,Disjoint,Normalize," +
-             "TN,FP,FN,TP,TN%,FP%,FN%,TP%,Mean_Accuracy").encode())
+             "TN,FP,FN,TP,TN/n,FP/n,FN/n,TP/n,Accuracy,Precision").encode())
 
     runs = []   # input combinations
     for class_ in cd.keys():
@@ -918,16 +923,19 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
             for d in disjoint:
                 for n in norm:
                     for i in it:
-                        runs.append([class_, nf, d, n, i]) # folded_data, class_, nf, i, n])
+                        runs.append([class_, nf, d, n, i])
 
-    # outputs, one for each input combo
-    data = parfor(train_variation, runs)
+    # parallel processing goes here
+    t0 = time.time()  # start watch
+    data = parfor(train_variation, runs)  # outputs, one for each input combo
+    t1 = time.time()  # stop watch
 
+    # now write the log files etc.
     for result in data:
         print("result", result)
         [TN, FP, FN, TP, \
          TN_p, FP_p, FN_p, TP_p, \
-         mean_score, clf, params] = result
+         accuracy, precision, clf, params] = result
 
         # unpack params
         class_, nf, d, n, i = params
@@ -937,27 +945,25 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
                          i + "," + str(d) + "," + str(n) + "," + TN +
                          "," + FP + "," + FN + "," + TP + "," + TN_p +
                          "," + FP_p + "," + FN_p + "," + TP_p + "," +
-                         mean_score)
+                         accuracy + "," + precision)
         print(line_to_write)
         f.write(line_to_write.encode())
+
+    print(len(runs), "models fit in", t1 - t0, "seconds,", (t1 - t0) / len(runs), "seconds per model")
     return data
 
-"""
-        LIST OF THE AVAILABLE DATA NOT INVESTIGATED
-
-    # vri_s2_objid2.tif_project_4x.bin_sub.bin
-    # S2A.bin_4x.bin_sub.bin
-    # vri_s3_objid2.tif_project_4x.bin_sub.bin
-"""
 
 if __name__ == "__main__":
-
-
     data_folder = "data_bcgw"
 
-    if not os.path.exists(data_folder) or not os.path.isdir("data_bcgw"):
-        err("please run from fuel-for-fire/ folder")
+    if not exist(data_folder) or not os.path.isdir(data_folder):
+        err("please run from fuel-for-fire/ folder, with 20191207data.tar.gz extracted there")
     
+
+    # split up the new ground reference files, by value, resulting in binary maps
+    if exist("data_vri/") and not exist("data_vri/binary/"):
+        run("python3 dev/class_split.py data_vri/")
+
     data_frame = populate_data_frame(get_data(["data_img/",
                                                "data_bcgw/",
                                                "data_vri/binary/"]),
@@ -976,10 +982,13 @@ if __name__ == "__main__":
                                         norm=[True],
                                         it=['all'])
     
-    sys.exit(1)
+    # exit
+    sys.exit(0)
+
+    # ash was hoping to output class maps from the data next
     for d in data:
         print("d", d)
-        [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf] = d
+        [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf, params] = d
         print("clf", clf)
     
     # fd = fold(data_frame, 'water', n_folds=5, disjoint=False)
