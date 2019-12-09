@@ -230,11 +230,14 @@ def populate_data_frame(rasterBin, showplots=False):
                 err(name + " already in data_frame")
 
             d = layer.ravel()
-            values = hist(d)
+            counts = hist(d)
+
+            enough_points = min(counts.values()) > 1000
 
             # only add the layer to the stack, if it has at least two values
-            if len(values) > 1:
-                print(len(values), name, values)
+            if len(counts) > 1 and enough_points:
+
+                print(len(counts), name, counts)
                 data_frame[name] = d
             
                 print(name + '_bool')
@@ -923,11 +926,12 @@ if __name__ == "__main__":
                                         it=['all'])
     '''
     data = train_all_variations_folded(data_frame,
-                                       n_f=range(2, 21),
+                                       n_f=[2, 5, 10], #range(2, 21),
                                         disjoint=[False],
                                         norm=[True],
                                         it=['all'])
     
+    sys.exit(1)
     for d in data:
         print("d", d)
         [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf] = d
