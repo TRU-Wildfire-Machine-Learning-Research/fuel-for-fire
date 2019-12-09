@@ -30,10 +30,8 @@ partial setup instructions for ubuntu 18:
   python3 -m pip install --upgrade pytest
 '''
 
-# these guys can be read off the input data variable:
-lines = 401  # y dimension
-samples = 410  # x dimension
-
+# assume data dimensions are the same for every input file
+lines, samples = None, None # read these from header file
 
 def get_data(fp):
     """Assumes the filepath provided contains both
@@ -63,6 +61,7 @@ def get_date_string():
 
 
 def populate_data_frame(rasterBin, showplots=False):
+    global samples, lines
     """Receives a list of file paths to .bin files.
         A ground truth raster (predefined) is read,
         band by band, and stored in the data_frame.
@@ -124,7 +123,27 @@ def populate_data_frame(rasterBin, showplots=False):
     '''
     print("putting stuff in data_Frame:")
     for raster in rasterBin:
+        print("raster", raster)
         name = raster.split(os.path.sep)[-1].split(".")[0]
+
+        if 'bool' in name:
+            err('unexpected: bool substr of filename')
+
+        hdr = '.'.join(raster.split(".")[:-1]) + '.hdr'
+        if not exist(hdr):
+            err("couldn't find hdr file")
+
+        # pragmatic programming: make sure all the dimensions match
+        samples2, lines2, bands2 = read_hdr(hdr)
+        if not samples or not lines:
+            samples, lines = samples2, lines2
+        else:
+            if samples2 != samples or lines2 != lines:
+                err("unexpected dimensions: " +
+                    str(samples2) + "x" + str(lines2) + ', expected: ' +
+                    str(samples) + 'x' + str(lines))
+
+
         if "S2A" in name:
             dataset = rasterio.open(raster)
             for idx in dataset.indexes:
@@ -199,17 +218,38 @@ def populate_data_frame(rasterBin, showplots=False):
             data_frame['exposed_val'] = exposed.ravel()
             print('exposed_bool')
             data_frame['exposed_bool'] = data_frame['exposed_val'] != 0.0
+
         else:
-            layer = rasterio.open(raster)#.read(1)
+            layer = rasterio.open(raster)
             if len(layer.indexes) > 1:
                 err("expected one band only")
             layer = rasterio.open(raster).read(1)
-            print(name)
-    sys.exit(1)
+
+            # pragmatic programming: make sure no name collision
+            if name in data_frame:
+                err(name + " already in data_frame")
+
+            d = layer.ravel()
+            values = hist(d)
+
+            # only add the layer to the stack, if it has at least two values
+            if len(values) > 1:
+                print(len(values), name, values)
+                data_frame[name] = d
+            
+                print(name + '_bool')
+                data_frame[name + '_bool'] = data_frame[name] != 0.
+    
+        # remove the later!
+        if len(data_frame.columns) > 50:
+            break
+    
     if showplots:
         show_original_image(data_frame, 'l')
         show_original_image(data_frame, 's')
         show_truth_data_subplot(data_frame)
+
+    print("data_frame.columns", data_frame.columns)
     return data_frame
 
 
@@ -220,6 +260,12 @@ def create_image_array(df, class_):
         of truth data.
 
         returns a ndarray.
+
+        Comment:
+          in future, might find it simpler to use numpy array 
+        for everything (i.e., init one numpy array for each 
+        input file). That way, don't need methods to convert
+        between data types!
     """
     arr = np.ones([len(df)], dtype='int')
     class_bool = class_ + "_bool"
@@ -329,11 +375,11 @@ def get_x_data(df, image_type):
         to the training data
     """
     if image_type == "all":
-        X = df.loc[:, :"L8_longwave_infrared2"]
+        X = df.loc[:, :'L8_11']  # :"L8_longwave_infrared2"]
     elif image_type == "s":
-        X = df.loc[:, :"S2_swir2"]
+        X = df.loc[:, :'S2A_12']  #:"S2_swir2"]
     elif image_type == "l":
-        X = df.loc[:, "L8_coastal_aerosol": "L8_longwave_infrared2"]
+        X = df.loc[:, 'L8_1': 'L8_11']  # "L8_coastal_aerosol": "L8_longwave_infrared2"]
     return X
 
 
@@ -400,8 +446,8 @@ def create_union_column(data_frame, classes, dictionary):
 
     data_frame[class_str] = data_frame[dictionary[classes[0]]]
     for class_ in classes:
-        data_frame[class_str] = data_frame[dictionary[class_]
-                                           ] | data_frame[class_str]
+        data_frame[class_str] = \
+            data_frame[dictionary[class_]] | data_frame[class_str]
 
     dictionary = create_class_dictionary(data_frame)
 
@@ -869,9 +915,16 @@ if __name__ == "__main__":
                                                "data_vri/binary/"]),
                                                showplots=False)
     
+    '''
     data = train_all_variations_folded(data_frame,
                                        n_f=range(2, 21),
                                         disjoint=[True],
+                                        norm=[True],
+                                        it=['all'])
+    '''
+    data = train_all_variations_folded(data_frame,
+                                       n_f=range(2, 21),
+                                        disjoint=[False],
                                         norm=[True],
                                         it=['all'])
     
