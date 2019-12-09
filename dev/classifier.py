@@ -30,6 +30,8 @@ partial setup instructions for ubuntu 18:
   python3 -m pip install --upgrade pytest
 '''
 
+global data_frame
+data_frame = None  # global variable for data frame (need for parallelism)
 # assume data dimensions are the same for every input file
 lines, samples = None, None # read these from header file
 
@@ -856,6 +858,29 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
     return [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf]
 
 
+# execute this in parallel
+def train_variation(params):
+    global data_frame
+
+    # unpack input parameters
+    class_, nf, d, n, i = params
+
+    # selection
+    folded_data = fold(data_frame, class_, n_folds=nf, disjoint=d)
+
+    # training
+    TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf = \
+        train_folded(folded_data, class_,
+                     n_folds=nf, image_type=i,
+                     normalize=n)
+    result = [TN, FP, FN, TP, \
+            TN_p, FP_p, FN_p, TP_p, \
+            mean_score, clf, params]
+    if len(result) != 11:
+        err("result")
+
+    return(result)
+
 def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
                                 norm=[True], it=[all]):
     newpath = "log/folded_classifier_" + get_date_string()
@@ -879,44 +904,26 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
                     for i in it:
                         runs.append([class_, nf, d, n, i]) # folded_data, class_, nf, i, n])
 
-    # local function: execute this in parallel
-    def train_variation(params):
-        # unpack input parameters
-        class_, nf, d, n, i = params
-        
-        # selection
-        folded_data = fold(df, class_, n_folds=nf, disjoint=d)
-
-        # training
-        TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, clf = \
-                            train_folded(folded_data, class_,
-                                         n_folds=nf, image_type=i,
-                                         normalize=n)
-        return [TN, FP, FN, TP, \
-                TN_p, FP_p, FN_p, TP_p, \
-                mean_score, clf, params]
-     
     # outputs, one for each input combo
     data = parfor(train_variation, runs)
 
     for result in data:
+        print("result", result)
         [TN, FP, FN, TP, \
          TN_p, FP_p, FN_p, TP_p, \
          mean_score, clf, params] = result
 
+        # unpack params
         class_, nf, d, n, i = params
-        
+
+        # one line of log output
         line_to_write = ('\n' + class_ + "," + str(nf) + "," +
                          i + "," + str(d) + "," + str(n) + "," + TN +
                          "," + FP + "," + FN + "," + TP + "," + TN_p +
                          "," + FP_p + "," + FN_p + "," + TP_p + "," +
                          mean_score)
-
-        print("")
         print(line_to_write)
         f.write(line_to_write.encode())
-        data.append([TN, FP, FN, TP, \
-                     TN_p, FP_p, FN_p, TP_p, mean_score, clf])
     return data
 
 """
@@ -928,9 +935,13 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
 """
 
 if __name__ == "__main__":
+
+
     data_folder = "data_bcgw"
+
     if not os.path.exists(data_folder) or not os.path.isdir("data_bcgw"):
         err("please run from fuel-for-fire/ folder")
+    
     data_frame = populate_data_frame(get_data(["data_img/",
                                                "data_bcgw/",
                                                "data_vri/binary/"]),
