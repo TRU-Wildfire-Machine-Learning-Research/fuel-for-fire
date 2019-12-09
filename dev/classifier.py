@@ -244,10 +244,6 @@ def populate_data_frame(rasterBin, showplots=False):
                 print(name + '_bool')
                 data_frame[name + '_bool'] = data_frame[name] != 0.
     
-        # remove this later!
-        if len(data_frame.columns) > 50:
-            break
-    
     if showplots:
         show_original_image(data_frame, 'l')
         show_original_image(data_frame, 's')
