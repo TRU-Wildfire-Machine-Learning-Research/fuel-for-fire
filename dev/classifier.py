@@ -971,14 +971,14 @@ if __name__ == "__main__":
         run("python3 dev/class_split.py data_vri/")
 
     dirs, data = ["data_img/", "data_bcgw/", "data_vri/binary/"], None
-    
     data_frame = None
     if not exist('data_frame.pkl'):
         data_frame = populate_data_frame(get_data(dirs),
                                          showplots=False)
         pickle.dump([data_frame, lines, samples], open('data_frame.pkl', 'wb'))
     else:
-        [data_frame, lines, samples] = pickle.load(open('data_frame.pkl', 'rb'))
+        [data_frame, lines, samples] = \
+            pickle.load(open('data_frame.pkl', 'rb'))
 
     image_type = 'all'
     if not exist('data.pkl'):
@@ -1016,13 +1016,13 @@ if __name__ == "__main__":
 
         # make prediction on full data
         y_pred = clf.predict(X)
-        y = np.array([(1. if y_i == True else 0.) for y_i in y_pred], dtype=float)
+        y = np.array([(1. if y_i is True else 0.) for y_i in y_pred],
+                     dtype=float)
         samples, lines = int(samples), int(lines)
         y = y.reshape(lines, samples)
         plt.imshow(y, cmap='binary')
         plt.title(class_)
         plt.show()
-
 
     # fd = fold(data_frame, 'water', n_folds=5, disjoint=False)
     # for idx in range(len(fd)):
