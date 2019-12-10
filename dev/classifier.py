@@ -257,7 +257,7 @@ def populate_data_frame(rasterBin, showplots=False):
     if showplots:
         show_original_image(data_frame, 'l')
         show_original_image(data_frame, 's')
-        show_truth_data_subplot(data_frame)
+        #show_truth_data_subplot(data_frame)
 
     print("data_frame.columns", data_frame.columns)
     return data_frame
@@ -281,35 +281,6 @@ def create_class_dictionary(data_frame):
     dictionary = dict(zip(column_keys, column_values))
 
     return dictionary
-
-
-def show_truth_data_subplot(df, window_title="Truth Data"):
-    """Displays a subplot of all the truth data in a binary
-        fashion.
-
-    """
-    dictionary = create_class_dictionary(df)
-    fig, axes = plt.subplots(3, 3, figsize=(9, 7))
-    fig.canvas.set_window_title(window_title)
-    col = 0
-    row = 0
-    for key in dictionary.keys():
-        arr = create_image_array(df, key)
-        show(arr, cmap='Greys', ax=axes[row, col], title=key)
-        axes[row, col].set(xlabel='width (px)', ylabel='height (px)')
-
-        # indexing the subplot
-        col = col + 1
-        if col > 2:
-            col = 0
-            row = row + 1
-
-    # make this plot a bit bigger
-    plt.gcf().set_size_inches(14, 14. * float(lines) / float(samples))
-    plt.tight_layout()
-    print("+w truth_data.png")
-    plt.savefig("truth_data.png")  # show()
-
 
 def show_original_image(df, data):
     """builds an array of the RGB values of the
