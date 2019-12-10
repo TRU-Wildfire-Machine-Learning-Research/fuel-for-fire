@@ -141,6 +141,7 @@ def populate_data_frame(rasterBin, showplots=False):
 
         # pragmatic programming: make sure all the dimensions match
         samples2, lines2, bands2 = read_hdr(hdr)
+        samples2, lines2, bands2 = int(samples2), int(lines2), int(bands2)
         if not samples or not lines:
             samples, lines = samples2, lines2
         else:
@@ -225,6 +226,7 @@ def populate_data_frame(rasterBin, showplots=False):
             data_frame['exposed_bool'] = data_frame['exposed_val'] != 0.0
 
         else:
+            continue
             layer = rasterio.open(raster)
             if len(layer.indexes) > 1:
                 err("expected one band only")
@@ -338,22 +340,45 @@ def show_original_image(df, data):
         between 0 - 1 (matplotlib req.) and
         displays that image in a plot.
 
+Landsat 8:
+Spectral Band 	Wavelength 	Resolution 	Solar Irradiance
+Band 1 - Coastal / Aerosol 	0.433 – 0.453 μm 	30 m 	2031 W/(m2μm)
+Band 2 - Blue 	0.450 – 0.515 μm 	30 m 	1925 W/(m2μm)
+Band 3 - Green 	0.525 – 0.600 μm 	30 m 	1826 W/(m2μm)
+Band 4 - Red 	0.630 – 0.680 μm 	30 m 	1574 W/(m2μm)
+Band 5 - Near Infrared 	0.845 – 0.885 μm 	30 m 	955 W/(m2μm)
+Band 6 - Short Wavelength Infrared 	1.560 – 1.660 μm 	30 m 	242 W/(m2μm)
+Band 7 - Short Wavelength Infrared 	2.100 – 2.300 μm 	30 m 	82.5 W/(m2μm)
+Band 8 - Panchromatic 	0.500 – 0.680 μm 	15 m 	1739 W/(m2μm)
+Band 9 - Cirrus 	1.360 – 1.390 μm 	30 m 	361 W/(m2μm) 
+
+Sentinel-2 bands 	Sentinel-2A 	Sentinel-2B
+Central wavelength (nm) 	Bandwidth (nm) 	Central wavelength (nm) 	Bandwidth (nm) 	Spatial resolution (m)
+Band 1 – Coastal aerosol 	442.7 	21 	442.2 	21 	60
+Band 2 – Blue 	492.4 	66 	492.1 	66 	10
+Band 3 – Green 	559.8 	36 	559.0 	36 	10
+Band 4 – Red 	664.6 	31 	664.9 	31 	10
+Band 5 – Vegetation red edge 	704.1 	15 	703.8 	16 	20
+Band 6 – Vegetation red edge 	740.5 	15 	739.1 	15 	20
+Band 7 – Vegetation red edge 	782.8 	20 	779.7 	20 	20
+Band 8 – NIR 	832.8 	106 	832.9 	106 	10
+Band 8A – Narrow NIR 	864.7 	21 	864.0 	22 	20
+Band 9 – Water vapour 	945.1 	20 	943.2 	21 	60
+Band 10 – SWIR – Cirrus 	1373.5 	31 	1376.9 	30 	60
+Band 11 – SWIR 	1613.7 	91 	1610.4 	94 	20
+Band 12 – SWIR 	2202.4 	175 	2185.7 	185 	20
     """
 
     arr = np.zeros((lines, samples, 3))
 
     if data == 's':
-
-        blue = rescale(df.S2_blue.values.reshape(lines, samples))
-        red = rescale(df.S2_red.values.reshape(lines, samples))
-        green = rescale(df.S2_green.values.reshape(lines, samples))
-
+        red = rescale(df.S2A_4.values.reshape(lines, samples))
+        green = rescale(df.S2A_3.values.reshape(lines, samples))
+        blue = rescale(df.S2A_2.values.reshape(lines, samples))
     elif data == 'l':
-
-        blue = rescale(df.L8_blue.values.reshape(lines, samples))
-        red = rescale(df.L8_red.values.reshape(lines, samples))
-        green = rescale(df.L8_green.values.reshape(lines, samples))
-
+        red = rescale(df.L8_4.values.reshape(lines, samples)) # red.values.reshape(lines, samples))
+        green = rescale(df.L8_3.values.reshape(lines, samples)) # green.values.reshape(lines, samples))
+        blue = rescale(df.L8_2.values.reshape(lines, samples))
     else:
         print("Specify an image to show in show_original_image(df, __) " +
               "('s' for sentinel2 or 'l' for landsat8)")
@@ -974,7 +999,7 @@ if __name__ == "__main__":
     data_frame = None
     if not exist('data_frame.pkl'):
         data_frame = populate_data_frame(get_data(dirs),
-                                         showplots=False)
+                                         showplots=True)  # False)
         pickle.dump([data_frame, lines, samples], open('data_frame.pkl', 'wb'))
     else:
         [data_frame, lines, samples] = \
@@ -990,18 +1015,18 @@ if __name__ == "__main__":
                                            it=['all'])
         '''
         data = train_all_variations_folded(data_frame,
-                                           n_f=[2, 5, 10],
+                                           n_f=[2], #[2, 5, 10],
                                            # range(2, 21),
                                            disjoint=[False],
                                            norm=[True],
-                                           it=[image_type])  # image type
+                                           it=['all']) #image_type])  # image type
 
         pickle.dump(data, open('data.pkl', 'wb'))
     else:
         data = pickle.load(open('data.pkl', 'rb'))
 
     # extract the Sentinel 2 / Landsat 8 stack from the data frame
-    X = get_x_data(data_frame, image_type)
+    X = get_x_data(data_frame, 'all') #image_type)
 
     # ash was hoping to output class maps from the data next
     for di in data:
@@ -1011,13 +1036,15 @@ if __name__ == "__main__":
         # unpack params
         class_, nf, d, n, i = params
 
-        print("di", di)
+        print("class", class_, "di", di)
         print("\tparams", params)
 
         # make prediction on full data
         y_pred = clf.predict(X)
         y = np.array([(1. if y_i is True else 0.) for y_i in y_pred],
                      dtype=float)
+
+        print("hist", hist(y))
         samples, lines = int(samples), int(lines)
         y = y.reshape(lines, samples)
         plt.imshow(y, cmap='binary')
