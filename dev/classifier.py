@@ -39,6 +39,9 @@ global lines
 global samples
 lines, samples = None, None  # read these from header file
 
+global raw_data
+
+
 
 def get_data(fp):
     """Assumes the filepath provided contains both
@@ -503,6 +506,8 @@ def rescale(arr, two_percent=True):
 
 
 def train(X_train, X_test, y_train, y_test):
+    global raw_data  # predict on whole data set
+    
     print("********TRAIN")
     debug = False
     """sklearn SGDClassifier
@@ -518,7 +523,11 @@ def train(X_train, X_test, y_train, y_test):
 
     sgd_clf = sgd_clf.fit(X_train, y_train)
     y_pred = sgd_clf.predict(X_test)
+
+    # predict on the "whole" data
+    y_pred_fulldat = sgd_clf.predict(raw_data)
     
+
     diff = y_train.astype(float) - y_pred.astype(float)
     
     print("\nX_train.shape", X_train.shape,
@@ -527,9 +536,8 @@ def train(X_train, X_test, y_train, y_test):
           #"\nY_train", y_train, 
           "\ny_pred.shape", y_pred.shape, 
           "\ny_pred", y_pred,
-          "\tsum(diff)", np.sum(diff))
-
-    err("test")
+          "\nsum(diff)", np.sum(diff), 
+          "\nsgd_clf", sgd_clf)
 
     if debug:
         print("\n{:*^30}\n".format("Training complete"))
@@ -539,7 +547,7 @@ def train(X_train, X_test, y_train, y_test):
         print("Test score:", score)
 
     cm, cm_p = print_classifier_metrics(y_test, y_pred)
-    return sgd_clf, score, cm, cm_p
+    return sgd_clf, score, cm, cm_p, y_pred_fulldat
 
 def train_all_variations(df):
     """Rudimentary test run of a SGD classifier with all of the possible
@@ -568,7 +576,9 @@ def train_all_variations(df):
                     print("{:<40}".format("Undersampling:" + str(s)))
                     print("{:<40}".format("Normalize: " + str(n)))
                     print("{:<40}".format("Image_Type: " + i))
-                    clf, score, cm = train(X, y)
+                    
+                    #clf, score, cm = train(X, y)
+                    clf, score, cm, cm_p, y_pred_fulldat = train(X, y)
 
                     # Save the top scored plot
                     if max_score < float(score):
@@ -708,7 +718,13 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
           train_test_split_folded_data(folded_data, idx, class_,
                                        image_type=image_type,
                                        normalize=normalize)
-        clf, score, cm, cm_p = train(X_train, X_test, y_train, y_test)
+        
+        clf, score, cm, cm_p, y_pred_fulldat = train(X_train,
+                                                     X_test,
+                                                     y_train,
+                                                     y_test)
+
+        # clf, score, cm, cm_p = train(X_train, X_test, y_train, y_test)
 
         cm_list.append(cm)
         cm_p_list.append(cm_p)
@@ -723,8 +739,7 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
 
     # add precision
     precision = "{:.3f}".format(float(TP) / (float(TP) + float(FP)))
-    return [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf]
-
+    return [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf, y_pred_fulldat]
 
 # execute this in parallel
 def train_variation(params):
@@ -737,15 +752,15 @@ def train_variation(params):
     folded_data = fold(data_frame, class_, n_folds=nf, disjoint=d)
 
     # training
-    TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf = \
+    TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p, mean_score, precision, clf, y_pred_fulldat = \
         train_folded(folded_data, class_,
                      n_folds=nf, image_type=i,
                      normalize=n)
     result = [TN, FP, FN, TP,
               TN_p, FP_p, FN_p, TP_p,
-              mean_score, precision, clf, params]
+              mean_score, precision, clf, y_pred_fulldat, params]
     print(result)
-    if len(result) != 12:
+    if len(result) != 13:
         err("result")
 
     return(result)
@@ -795,7 +810,7 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
         print("result", result)
         [TN, FP, FN, TP,
          TN_p, FP_p, FN_p, TP_p,
-         accuracy, precision, clf, params] = result
+         accuracy, precision, clf, y_pred_fulldat, params] = result
 
         # unpack params
         class_, nf, d, n, i = params
@@ -835,6 +850,9 @@ if __name__ == "__main__":
         [data_frame, lines, samples] = \
             pickle.load(open('data_frame.pkl', 'rb'))
 
+    # global raw_data
+    raw_data = get_x_data(data_frame, 'all')
+
     image_type = 'all'
     if not exist('data.pkl'):
         '''
@@ -860,7 +878,6 @@ if __name__ == "__main__":
     a = np.zeros((lines, samples, 3))
 
     print("X.shape", X.shape)
-    sys.exit(1)
     a[:, :, 0] = X.S2A_4.values.reshape(lines, samples)
     a[:, :, 1] = X.S2A_3.values.reshape(lines, samples)
     a[:, :, 2] = X.S2A_2.values.reshape(lines, samples)
@@ -874,7 +891,7 @@ if __name__ == "__main__":
     # ash was hoping to output class maps from the data next
     for di in data:
         [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p,
-         accuracy, precision, clf, params] = di
+         accuracy, precision, clf, y_pred_fulldat, params] = di
 
         # unpack params
         class_, nf, d, n, i = params
@@ -902,7 +919,7 @@ if __name__ == "__main__":
         f, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True)
         ax1.imshow(a)
         ax2.imshow(groundref, cmap = 'binary_r') # why we have to reverse colourmap, don't know!
-        ax3.imshow(y) #, cmap='binary')
+        ax3.imshow(y_pred_fulldat.reshape(lines, samples), cmap = 'binary_r') #, cmap='binary')
         
         ax1.set_title('image')
         ax2.set_title('reference: ' + groundref_name)
