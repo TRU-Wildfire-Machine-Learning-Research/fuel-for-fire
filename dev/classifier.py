@@ -3,6 +3,7 @@ import sys
 import math
 import copy
 import time
+import pickle
 import datetime
 from misc import *
 import numpy as np
@@ -34,6 +35,8 @@ partial setup instructions for ubuntu 18:
 global data_frame
 data_frame = None  # global variable for data frame (need for parallelism)
 # assume data dimensions are the same for every input file
+global lines
+global samples
 lines, samples = None, None  # read these from header file
 
 
@@ -969,9 +972,15 @@ if __name__ == "__main__":
 
     dirs, data = ["data_img/", "data_bcgw/", "data_vri/binary/"], None
     
-    data_frame = populate_data_frame(get_data(dirs),
-                                     showplots=False)
+    data_frame = None
+    if not exist('data_frame.pkl'):
+        data_frame = populate_data_frame(get_data(dirs),
+                                         showplots=False)
+        pickle.dump([data_frame, lines, samples], open('data_frame.pkl', 'wb'))
+    else:
+        [data_frame, lines, samples] = pickle.load(open('data_frame.pkl', 'rb'))
 
+    image_type = 'all'
     if not exist('data.pkl'):
         '''
         data = train_all_variations_folded(data_frame,
@@ -985,24 +994,34 @@ if __name__ == "__main__":
                                            # range(2, 21),
                                            disjoint=[False],
                                            norm=[True],
-                                           it=['all'])
+                                           it=[image_type])  # image type
 
-        import pickle
         pickle.dump(data, open('data.pkl', 'wb'))
     else:
-        import pickle
         data = pickle.load(open('data.pkl', 'rb'))
 
-    # ash was hoping to output class maps from the data next
-    for d in data:
-        print("d", d)
-        [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p,
-         accuracy, precision, clf, params] = d
-        print("clf", clf)
+    # extract the Sentinel 2 / Landsat 8 stack from the data frame
+    X = get_x_data(data_frame, image_type)
 
+    # ash was hoping to output class maps from the data next
+    for di in data:
+        [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p,
+         accuracy, precision, clf, params] = di
 
         # unpack params
         class_, nf, d, n, i = params
+
+        print("di", di)
+        print("\tparams", params)
+
+        # make prediction on full data
+        y_pred = clf.predict(X)
+        y = np.array([(1. if y_i == True else 0.) for y_i in y_pred], dtype=float)
+        samples, lines = int(samples), int(lines)
+        y = y.reshape(lines, samples)
+        plt.imshow(y, cmap='binary')
+        plt.title(class_)
+        plt.show()
 
 
     # fd = fold(data_frame, 'water', n_folds=5, disjoint=False)
