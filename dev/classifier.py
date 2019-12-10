@@ -292,7 +292,7 @@ Band 12 – SWIR 	2202.4 	175 	2185.7 	185 	20
     arr[:, :, 1] = green
     arr[:, :, 2] = blue
 
-    plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
+    # plt.gcf().set_size_inches(7, 7. * float(lines) / float(samples))
     plt.imshow(arr)
     plt.tight_layout()
     impath = "original_image" + "_" + data + ".png"
@@ -528,7 +528,7 @@ def train(X_train, X_test, y_train, y_test):
     cm, cm_p = print_classifier_metrics(y_test, y_pred)
     return sgd_clf, score, cm, cm_p
 
-
+'''
 def trainGB(X_train, X_test, y_train, y_test):
     gbrt = GradientBoostingClassifier(random_state=0)
 
@@ -544,7 +544,7 @@ def trainGB(X_train, X_test, y_train, y_test):
     cm = print_classifier_metrics(y_test, y_pred)
 
     return gbrt, score, cm
-
+'''
 
 def train_all_variations(df):
     """Rudimentary test run of a SGD classifier with all of the possible
@@ -851,6 +851,17 @@ if __name__ == "__main__":
 
     # extract the Sentinel 2 / Landsat 8 stack from the data frame
     X = get_x_data(data_frame, 'all') #image_type)
+    a = np.zeros((lines, samples, 3))
+    a[:, :, 0] = X.S2A_4.values.reshape(lines, samples)
+    a[:, :, 1] = X.S2A_3.values.reshape(lines, samples)
+    a[:, :, 2] = X.S2A_2.values.reshape(lines, samples)
+    a = (a - np.min(a)) / np.max(a)
+    
+
+    values = a.ravel()
+
+    print("a", a)
+    print("a.shape", a.shape)
 
     # ash was hoping to output class maps from the data next
     for di in data:
@@ -863,6 +874,13 @@ if __name__ == "__main__":
         print("class", class_, "di", di)
         print("\tparams", params)
 
+        groundref_name = class_ + '_bool'
+        if not groundref_name in data_frame:
+            err("failed to find: " + groundref)
+ 
+        # converted to float at end, so matplotlib would show data values on the plot
+        groundref = data_frame[groundref_name].values.reshape(lines, samples).astype(float)
+
         # make prediction on full data
         y_pred = clf.predict(X)
         y = np.array([(1. if y_i is True else 0.) for y_i in y_pred],
@@ -871,7 +889,16 @@ if __name__ == "__main__":
         print("hist", hist(y))
         samples, lines = int(samples), int(lines)
         y = y.reshape(lines, samples)
-        plt.imshow(y, cmap='binary')
-        plt.title(class_)
+
+        plt.close('all')
+        f, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True)
+        ax1.imshow(a)
+        ax2.imshow(groundref, cmap = 'binary_r') # why we have to reverse colourmap, don't know!
+        ax3.imshow(y) #, cmap='binary')
+        
+        ax1.set_title('image')
+        ax2.set_title('reference: ' + groundref_name)
+        ax3.set_title('predicted: ' + groundref_name)
+        plt.tight_layout()
         plt.show()
 
