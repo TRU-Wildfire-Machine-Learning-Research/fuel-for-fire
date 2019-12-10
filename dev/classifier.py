@@ -505,7 +505,7 @@ def rescale(arr, two_percent=True):
     return scaled
 
 
-def train(X_train, X_test, y_train, y_test):
+def train(X_train, X_test, y_train, y_test, class_):
     global raw_data  # predict on whole data set
     
     print("********TRAIN")
@@ -584,7 +584,7 @@ def train_all_variations(df):
                     print("{:<40}".format("Image_Type: " + i))
                     
                     #clf, score, cm = train(X, y)
-                    clf, score, cm, cm_p, y_pred_fulldat = train(X, y)
+                    clf, score, cm, cm_p, y_pred_fulldat = train(X, y, class_)
 
                     # Save the top scored plot
                     if max_score < float(score):
@@ -728,7 +728,8 @@ def train_folded(folded_data, class_, n_folds=5, image_type='all',
         clf, score, cm, cm_p, y_pred_fulldat = train(X_train,
                                                      X_test,
                                                      y_train,
-                                                     y_test)
+                                                     y_test,
+                                                     class_)
 
         # clf, score, cm, cm_p = train(X_train, X_test, y_train, y_test)
 
