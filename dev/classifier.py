@@ -508,7 +508,7 @@ def rescale(arr, two_percent=True):
 def train(X_train, X_test, y_train, y_test, class_):
     global raw_data  # predict on whole data set
     
-    print("********TRAIN")
+    print("********TRAIN, class_=", class_)
     debug = False
     """sklearn SGDClassifier
 
@@ -521,15 +521,20 @@ def train(X_train, X_test, y_train, y_test, class_):
     if debug:
         print("\n\nBegin Fitting SGD\n")
 
-    sgd_clf = sgd_clf.fit(X_train, y_train)
+    # sgd_clf = sgd_clf.fit(X_train, y_train)
+    sgd_clf.fit(X_train, y_train)
     y_pred = sgd_clf.predict(X_test)
     print("hist(y_pred)", hist(y_pred))
 
 
-    sgd_clf = sgd_clf.fit(X_train, y_train)
-    # predict on the "whole" data
+    # predict on whole data
+    sgd_clf = SGDClassifier(random_state=42, verbose=False,
+                            max_iter=1000, tol=1.e-3)
+    # sgd_clf = sgd_clf.fit(X_train, y_train)
+    sgd_clf.fit(X_train, y_train)
     y_pred_fulldat = sgd_clf.predict(raw_data)
     
+
     print("hist(pred_fulldat)", hist(y_pred_fulldat))
     exit(1)
     global data_frame
