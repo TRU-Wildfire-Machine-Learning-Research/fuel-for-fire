@@ -263,29 +263,6 @@ def populate_data_frame(rasterBin, showplots=False):
     return data_frame
 
 
-def create_image_array(df, class_):
-    """Generates a numpy.ndarray the same
-        size as the raw data (statically defined)
-        that is used to visualize a binary representation
-        of truth data.
-
-        returns a ndarray.
-
-        Comment:
-          in future, might find it simpler to use numpy array
-        for everything (i.e., init one numpy array for each
-        input file). That way, don't need methods to convert
-        between data types!
-    """
-    arr = np.ones([len(df)], dtype='int')
-    class_bool = class_ + "_bool"
-    true_df = df[class_bool].loc[df[class_bool] is True]
-    for idx in true_df.index:
-        arr[idx] = 0
-        rs_arr = arr.reshape(lines, samples)  # 401, 410)
-    return rs_arr
-
-
 def create_class_dictionary(data_frame):
     """dictionary for making simple requests for data from
         the dataframe. Key corresponds to a class name
