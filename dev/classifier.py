@@ -523,12 +523,15 @@ def train(X_train, X_test, y_train, y_test):
 
     sgd_clf = sgd_clf.fit(X_train, y_train)
     y_pred = sgd_clf.predict(X_test)
+    print("hist(y_pred)", hist(y_pred))
 
 
     sgd_clf = sgd_clf.fit(X_train, y_train)
     # predict on the "whole" data
     y_pred_fulldat = sgd_clf.predict(raw_data)
     
+    print("hist(pred_fulldat)", hist(y_pred_fulldat))
+    exit(1)
     global data_frame
 
     diff = y_train.astype(float) - y_pred.astype(float)
@@ -893,7 +896,6 @@ if __name__ == "__main__":
         values.sort()
         mn = values[int(math.floor(float(npx) * 0.01))]
         mx = values[int(math.floor(float(npx) * 0.99))]
-        print("i", i, "mn", mn, "mx", mx)
         rng = mx - mn
         a[:, :, i] -= mn
         if rng > 0.:
@@ -902,10 +904,7 @@ if __name__ == "__main__":
         (a[:, :, i])[a[:, :, i] > 1.] = 1.
 
 
-    print("a", a)
-    print("a.shape", a.shape)
-
-    # ash was hoping to output class maps from the data next
+    # hoping to output class maps from the data next
     for di in data:
         [TN, FP, FN, TP, TN_p, FP_p, FN_p, TP_p,
          accuracy, precision, clf, y_pred_fulldat, params] = di
