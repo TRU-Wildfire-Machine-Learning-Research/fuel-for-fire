@@ -503,6 +503,7 @@ def rescale(arr, two_percent=True):
 
 
 def train(X_train, X_test, y_train, y_test):
+    print("********TRAIN")
     debug = False
     """sklearn SGDClassifier
 
@@ -517,6 +518,18 @@ def train(X_train, X_test, y_train, y_test):
 
     sgd_clf = sgd_clf.fit(X_train, y_train)
     y_pred = sgd_clf.predict(X_test)
+    
+    diff = y_train.astype(float) - y_pred.astype(float)
+    
+    print("\nX_train.shape", X_train.shape,
+          "\nY_train.shape", y_train.shape, 
+          #"\nX_train", X_train, 
+          #"\nY_train", y_train, 
+          "\ny_pred.shape", y_pred.shape, 
+          "\ny_pred", y_pred,
+          "\tsum(diff)", np.sum(diff))
+
+    err("test")
 
     if debug:
         print("\n{:*^30}\n".format("Training complete"))
@@ -527,24 +540,6 @@ def train(X_train, X_test, y_train, y_test):
 
     cm, cm_p = print_classifier_metrics(y_test, y_pred)
     return sgd_clf, score, cm, cm_p
-
-'''
-def trainGB(X_train, X_test, y_train, y_test):
-    gbrt = GradientBoostingClassifier(random_state=0)
-
-    np.set_printoptions(precision=3)
-
-    print("\n\nBegin Fitting GBC\n")
-
-    gbrt = gbrt.fit(X_train, y_train)
-    y_pred = gbrt.predict(X_test)
-
-    score = "{:.3f}".format(gbrt.score(X_test, y_test))
-    print("Test score:", score)
-    cm = print_classifier_metrics(y_test, y_pred)
-
-    return gbrt, score, cm
-'''
 
 def train_all_variations(df):
     """Rudimentary test run of a SGD classifier with all of the possible
@@ -771,7 +766,9 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
     f.write(("Class,N_Folds,Image_Type,Disjoint,Normalize," +
              "TN,FP,FN,TP,TN/n,FP/n,FN/n,TP/n,Accuracy,Precision").encode())
 
-    runs = []   # input combinations
+    runs, data = [], []   # input combinations, output data
+
+    # select input combinations
     for class_ in cd.keys():
         for nf in n_f:
             for d in disjoint:
@@ -781,7 +778,16 @@ def train_all_variations_folded(df, n_f=[2, 5, 10], disjoint=[True, False],
 
     # parallel processing goes here
     t0 = time.time()  # start watch
-    data = parfor(train_variation, runs)  # outputs, one for each input combo
+
+    # don't forget to change this back:
+    use_parallel = False
+    data = []
+    if use_parallel:
+        data = parfor(train_variation, runs)
+    else:
+        for run in runs:
+            data.append(train_variation(run))
+    
     t1 = time.time()  # stop watch
 
     # now write the log files etc.
@@ -852,13 +858,15 @@ if __name__ == "__main__":
     # extract the Sentinel 2 / Landsat 8 stack from the data frame
     X = get_x_data(data_frame, 'all') #image_type)
     a = np.zeros((lines, samples, 3))
+
+    print("X.shape", X.shape)
+    sys.exit(1)
     a[:, :, 0] = X.S2A_4.values.reshape(lines, samples)
     a[:, :, 1] = X.S2A_3.values.reshape(lines, samples)
     a[:, :, 2] = X.S2A_2.values.reshape(lines, samples)
     a = (a - np.min(a)) / np.max(a)
+    values = a.reshape(np.prod(a.shape)).tolist()
     
-
-    values = a.ravel()
 
     print("a", a)
     print("a.shape", a.shape)
