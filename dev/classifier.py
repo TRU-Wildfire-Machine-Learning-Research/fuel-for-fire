@@ -524,9 +524,12 @@ def train(X_train, X_test, y_train, y_test):
     sgd_clf = sgd_clf.fit(X_train, y_train)
     y_pred = sgd_clf.predict(X_test)
 
+
+    sgd_clf = sgd_clf.fit(X_train, y_train)
     # predict on the "whole" data
     y_pred_fulldat = sgd_clf.predict(raw_data)
     
+    global data_frame
 
     diff = y_train.astype(float) - y_pred.astype(float)
     
@@ -882,8 +885,22 @@ if __name__ == "__main__":
     a[:, :, 1] = X.S2A_3.values.reshape(lines, samples)
     a[:, :, 2] = X.S2A_2.values.reshape(lines, samples)
     a = (a - np.min(a)) / np.max(a)
-    values = a.reshape(np.prod(a.shape)).tolist()
     
+    for i in range(0, 3):
+        d = a[:, :, i]
+        npx = samples * lines
+        values = d.reshape(np.prod(d.shape)).tolist()
+        values.sort()
+        mn = values[int(math.floor(float(npx) * 0.01))]
+        mx = values[int(math.floor(float(npx) * 0.99))]
+        print("i", i, "mn", mn, "mx", mx)
+        rng = mx - mn
+        a[:, :, i] -= mn
+        if rng > 0.:
+            a[:, :, i] /= rng
+        (a[:, :, i])[a[:, :, i] < 0.] = 0.
+        (a[:, :, i])[a[:, :, i] > 1.] = 1.
+
 
     print("a", a)
     print("a.shape", a.shape)
