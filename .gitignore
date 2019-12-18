@@ -3,4 +3,4 @@ data*
 *.png
 *DS_Store
 log
-.vscode*
+.vscode/*
