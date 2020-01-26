@@ -63,6 +63,7 @@ class TFLinreg(object):
                 name='GradientDescent')
         self.optimizer = optimizer.minimize(self.mean_cost)
 
+    @staticmethod
     def train_linreg(sess, model, X_train, y_train, num_epochs=100):
         ## initialize all varaibles W and b
         sess.run(model.init_op)
@@ -77,6 +78,7 @@ class TFLinreg(object):
 
         return training_costs
 
+    @staticmethod
     def predict_linreg(sess, model, X_test):
         y_pred = sess.run(model.z_net, feed_dict={model.X:X_test})
         return y_pred
@@ -119,6 +121,7 @@ class LayersMultiLayerPerceptron(object):
         self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
         self.train_op = self.optimizer.minimize(loss=self.cost)
 
+    @staticmethod
     def train_mlp(sess, model, X_train, y_train, num_epochs=100):
         sess.run(model.init_op)
 
@@ -140,6 +143,7 @@ class LayersMultiLayerPerceptron(object):
                   ))
         return training_costs
 
+    @staticmethod
     def predict_mlp(sess, model, X_test):
         feed = {model.tf_x : X_test}
         y_pred = sess.run(model.predictions['classes'],
