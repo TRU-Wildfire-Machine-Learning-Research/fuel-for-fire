@@ -4,6 +4,7 @@ import numpy as np
 
 class Data(object):
 
+    @staticmethod
     def load_mnist(path, kind='train'):
         labels_path = os.path.join(path, '%s-labels-idx1-ubyte' % kind)
         images_path = os.path.join(path, '%s-images-idx3-ubyte' % kind)
@@ -20,11 +21,13 @@ class Data(object):
 
         return images, labels
 
+    @staticmethod
     def mean_center_normalize(data):
         mean_vals = np.mean(data, axis=0)
         std_val = np.std(data)
         return mean_vals, std_val
 
+    @staticmethod
     def create_batch_generator(X, y, batch_size=128, shuffle=False):
         X_copy = np.array(X)
         y_copy = np.array(y)
