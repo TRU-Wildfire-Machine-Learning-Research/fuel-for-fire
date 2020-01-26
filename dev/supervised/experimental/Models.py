@@ -80,7 +80,7 @@ class TFLinreg(object):
         y_pred = sess.run(model.z_net, feed_dict={model.X:X_test})
         return y_pred
 
-class MultiLayerPerceptron(object):
+class LayersMultiLayerPerceptron(object):
     def __init__(self, n_features, n_classes, learning_rate=0.01):
         self.g = tf.Graph()
         self.learning_rate = learning_rate
