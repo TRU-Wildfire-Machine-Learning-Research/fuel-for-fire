@@ -8,6 +8,7 @@ class Data(object):
         labels_path = os.path.join(path, '%s-labels-idx1-ubyte' % kind)
         images_path = os.path.join(path, '%s-images-idx3-ubyte' % kind)
 
+        print(images_path)
         with open(labels_path, 'rb') as lbpath:
             magic, n = struct.unpack('>II', lbpath.read(8))
             labels = np.fromfile(lbpath, dtype=np.uint8)
@@ -36,3 +37,6 @@ class Data(object):
 
         for i in range(0, X.shape[0],batch_size):
             yield (X_copy[i : i+batch_size, :], y_copy[i : i+batch_size])
+
+
+    # def load_bcgw(path, kind='train'):
