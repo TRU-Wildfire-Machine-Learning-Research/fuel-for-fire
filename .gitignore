@@ -6,3 +6,4 @@ log
 *.vscode*
 *checkpoints*
 *mnist/
+20190926kamloops_data/
