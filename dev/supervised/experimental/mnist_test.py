@@ -1,19 +1,21 @@
 import tensorflow.compat.v1 as tf
 import matplotlib.pyplot as plt
+import numpy as np
 import pickle
 tf.disable_v2_behavior()
-from Data import *
-from Models import LayersMultiLayerPerceptron
+from Utils.Data import DataTest
+from Utils.Model import LayersMultiLayerPerceptron
+
 if __name__ == "__main__":
 
-    X_train, y_train = Data.load_mnist('./mnist/', kind='train')
+    X_train, y_train = DataTest.load_mnist('./mnist/', kind='train')
     print('TRAIN - Rows: %d, Columns: %d' %(X_train.shape[0],X_train.shape[1]))
 
-    X_test, y_test = Data.load_mnist('./mnist/', kind='t10k')
+    X_test, y_test = DataTest.load_mnist('./mnist/', kind='t10k')
     print('TEST - Rows: %d, Columns: %d' %(X_test.shape[0],X_test.shape[1]))
 
     ## mean centering and normalization
-    mean_vals, std_val = Data.mean_center_normalize(X_train)
+    mean_vals, std_val = DataTest.mean_center_normalize(X_train)
 
     X_train_centered = (X_train - mean_vals) / std_val
     X_test_centered = (X_test - mean_vals) / std_val
