@@ -72,8 +72,9 @@ class Image(object):
             int(samples), int(lines), int(bands)
 
         # Unsure of proper shape here --
-        self.Data = np.fromfile(bin, dtype=np.float32, count=-1).reshape(self.bands, self.lines, self.samples)
-"""
+        self.Data = np.fromfile(bin, dtype=np.float32).reshape(self.lines, self.samples, self.bands)
+        
+"""     
     General use functions
 """
 def create_batch_generator(X, y, batch_size=128, shuffle=False):
