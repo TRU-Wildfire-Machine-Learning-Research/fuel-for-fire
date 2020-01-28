@@ -30,25 +30,32 @@ class DataTest(object):
 class Data(object):
     def __init__(self, src, images_path, labels_path):
         self.src = src
-        self.build(images_path, labels_path)
+        self.__build(images_path, labels_path)
 
-    def build(self, images_path, labels_path):
+    def __build(self, images_path, labels_path):
         images_path = os.path.join(self.src, '%s' % images_path)
         labels_path = os.path.join(self.src, '%s' % labels_path)
-        img_bins, img_hdr = self.build_headers_binaries(images_path)
-        lbl_bins, lbl_hdr = self.build_headers_binaries(labels_path)
+        img_bins, img_hdr = self.__build_headers_binaries(images_path)
+        lbl_bins, lbl_hdr = self.__build_headers_binaries(labels_path)
+        self.__build_images(img_bins, img_hdr)
 
+    def __build_images(self, bins, hdrs):
+            for idx, hdr in enumerate(hdrs):
+                if 'S2' in hdr:
+                    self.S2 = Image('S2', bins[idx], hdr)
+                elif 'L8' in hdr:
+                    self.L8 = Image('L8', bins[idx], hdr)
+                else:
+                    err("Do not recognize header", hdr)
 
     @staticmethod
-    def build_headers_binaries(path):
-        print(path)
+    def __build_headers_binaries(path):
         try:
             for root, dirs, files in os.walk(path, topdown=False):
                 hdr_files = [
                     os.path.join(path, '%s' % file) \
                         for file in files if '.hdr' in file
                 ]
-                print("ok")
                 bin_files = [
                     os.path.join(path, '%s' % file) \
                         for file in files if '.hdr' not in file
@@ -57,6 +64,15 @@ class Data(object):
         except:
             err("Error building headers and binaries for %s" % path)
 
+class Image(object):
+    def __init__(self, stype, bin, hdr):
+        self.sattype = stype
+        samples, lines, bands = read_hdr(hdr)
+        self.samples, self.lines, self.bands = \
+            int(samples), int(lines), int(bands)
+
+        # Unsure of proper shape here --
+        self.Data = np.fromfile(bin, dtype=np.float32, count=-1).reshape(self.bands, self.lines, self.samples)
 """
     General use functions
 """
