@@ -7,10 +7,5 @@ from Utils.Data import Data
 if __name__ == "__main__":
 
     data = Data("data", "data_img", "data_bcgw")
-    print(data.S2.bands)
-    print(data.S2.lines)
-    print(data.S2.samples)
-    print(data.L8.bands)
-    print(data.L8.lines)
-    print(data.L8.samples)
-    plt.show()
+    
+    print(data.label['water'].Data)
