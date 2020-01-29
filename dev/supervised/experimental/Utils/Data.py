@@ -74,7 +74,7 @@ class Image(object):
         self.Data = data
 
 
-"""     
+"""
     General use functions
 """
 
