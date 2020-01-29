@@ -50,8 +50,42 @@ class Data(object):
             elif 'L8' in bin:
                 self.L8 = Image(bins[idx])
             else:
-                err("Do not recognize file", bin)
+                err("Do not recognize file ", bin)
 
+    def __build_labels(self, bins):
+        """
+        Build the class labels based on data in
+        bcgw folder
+
+        -   self.rawlabel = the raw float value read
+            from the binary
+
+        -   self.label = the encoded 1 (True) or 0
+            (False) value based on analysis of the
+            lablel
+            *** This has a high likelihood of breaking
+                in general, only after analyzing the
+                data are we able to encode the value
+        """
+        self.label = {}
+        self.rawlabel = {}
+        classes = [
+            "broadleaf",
+            "herb",
+            "conifer",
+            "water",
+            "shrub",
+            "river",
+            "exposed",
+            "cutbl",
+            "exposed",
+            "mixed",
+                   ]
+
+        for _, bin in enumerate(bins):
+            for c in classes:
+                if c in bin.lower():
+                    self.label[c] = Label(c,bin)
     @staticmethod
     def __build_binaries(path):
         try:
@@ -70,13 +104,14 @@ class Image(object):
         samples, lines, bands, data = read_binary(bin)
         self.samples, self.lines, self.bands = \
             int(samples), int(lines), int(bands)
-
-        # Unsure of proper shape here --
         self.Data = data
+
     def ravel(self):
         return self.Data.reshape(self.lines * self.samples, self.bands)
+
     def spatial(self):
         return self.Data.reshape(self.lines, self.samples, self.bands)
+
     def rgb(self):
         res = np.zeros((self.lines, self.samples, 3))
         red = rescale(self.spatial()[:,:,3])
@@ -87,6 +122,10 @@ class Image(object):
         res[:,:,2] = blue
         return res
 
+class Label(object):
+    def __init__(self, name, bin):
+        self.name = name
+        self.samples, self.lines, self.bands, self.Data = read_binary(bin)
 """
     General use functions
 """
