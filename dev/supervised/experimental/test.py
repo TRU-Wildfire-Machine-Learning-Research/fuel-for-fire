@@ -13,5 +13,4 @@ if __name__ == "__main__":
     print(data.L8.bands)
     print(data.L8.lines)
     print(data.L8.samples)
-    plt.imshow(data.S2.Data[:,:,1:4])
     plt.show()
