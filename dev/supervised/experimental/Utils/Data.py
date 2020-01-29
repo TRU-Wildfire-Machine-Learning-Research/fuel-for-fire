@@ -30,7 +30,6 @@ class DataTest(object):
         std_val = np.std(data)
         return mean_vals, std_val
 
-
 class Data(object):
     def __init__(self, src, images_path, labels_path):
         self.src = src
@@ -88,6 +87,7 @@ class Data(object):
             for c in classes:
                 if c in bin.lower():
                     self.label[c] = Label(c,bin)
+
     @staticmethod
     def __build_binaries(path):
         try:
@@ -99,7 +99,6 @@ class Data(object):
                 return bin_files
         except:
             err("Error building headers and binaries for %s" % path)
-
 
 class Image(object):
     def __init__(self, bin):
@@ -128,11 +127,11 @@ class Label(object):
     def __init__(self, name, bin):
         self.name = name
         self.samples, self.lines, self.bands, self.Data = read_binary(bin)
-"""
-    General use functions
-"""
 
 
+"""
+######    General use functions
+"""
 def create_batch_generator(X, y, batch_size=128, shuffle=False):
     X_copy = np.array(X)
     y_copy = np.array(y)
