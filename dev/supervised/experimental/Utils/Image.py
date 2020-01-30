@@ -1,5 +1,6 @@
 import numpy as np
 from Utils.Misc import *
+from Utils.DataManip import *
 
 class Image(object):
     def __init__(self, bin):
