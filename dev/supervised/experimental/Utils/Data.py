@@ -33,13 +33,14 @@ class Data(object):
 
     def __build_labels(self, bins):
         self.Label = dict()
-        classes = load_config()['bcgw_labels']
+        cfg = load_config()
+        classes = cfg['bcgw_labels']
 
         for _, bin in enumerate(bins):
             # add a dict item to the Label dict --
             # labelname : Label
             self.Label.update({
-                c:Label(c, bin)
+                c:Label(c, bin, cfg)
                 for c in classes if c in bin.lower()
             })
 
