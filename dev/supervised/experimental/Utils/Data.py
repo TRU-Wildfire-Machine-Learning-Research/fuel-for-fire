@@ -59,7 +59,8 @@ class Data(object):
                    ]
 
         for _, bin in enumerate(bins):
-            print(bin)
+            # add a dict item to the Label dict --
+            # labelname : Label
             self.Label.update({
                 c:Label(c, bin)
                 for c in classes if c in bin.lower()
