@@ -3,15 +3,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 tf.disable_v2_behavior()
-from Utils.Data import DataTest
+from Utils.DataTest import DataTest
 from Utils.Model import LayersMultiLayerPerceptron
 
 if __name__ == "__main__":
 
-    X_train, y_train = DataTest.load_mnist('./mnist/', kind='train')
+    X_train, y_train = DataTest.load_mnist('dev/supervised/experimental/mnist/', kind='train')
     print('TRAIN - Rows: %d, Columns: %d' %(X_train.shape[0],X_train.shape[1]))
 
-    X_test, y_test = DataTest.load_mnist('./mnist/', kind='t10k')
+    X_test, y_test = DataTest.load_mnist('dev/supervised/experimental/mnist/', kind='t10k')
     print('TEST - Rows: %d, Columns: %d' %(X_test.shape[0],X_test.shape[1]))
 
     ## mean centering and normalization
@@ -42,20 +42,20 @@ if __name__ == "__main__":
         100*np.sum(y_pred == y_test) / y_test.shape[0]
     ))
 
-    plt.plot(range(1, len(training_costs) + 1), training_costs)
-    plt.tight_layout()
-    plt.xlabel('Epoch')
-    plt.ylabel('Training Costs')
-    plt.show()
+    # plt.plot(range(1, len(training_costs) + 1), training_costs)
+    # plt.tight_layout()
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Training Costs')
+    # plt.show()
 
-    plt.scatter(X_train_centered, y_train, marker='s', s=50, label='Training Data')
-    plt.plot(range(X_train_centered.shape[0]),
-             y_pred,
-             color='gray', marker='o',
-             markersize=6, linewidth=3,
-             label='MLP Model')
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    # plt.scatter(X_train_centered, y_train, marker='s', s=50, label='Training Data')
+    # plt.plot(range(X_train_centered.shape[0]),
+    #          y_pred,
+    #          color='gray', marker='o',
+    #          markersize=6, linewidth=3,
+    #          label='MLP Model')
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+    # plt.legend()
+    # plt.tight_layout()
+    # plt.show()

@@ -1,5 +1,5 @@
 """
-    Following tutorial provided in "Python Machine Learning - 
+    Following tutorial provided in "Python Machine Learning -
     Second Edition by Sebastian Raschka and Vahid Mirjalili"
 """
 
@@ -7,6 +7,7 @@ import tensorflow.compat.v1 as tf
 import tensorflow.keras as keras
 import numpy as np
 from Utils.Data import *
+from Utils.DataManip import create_batch_generator
 
 tf.disable_v2_behavior()
 
