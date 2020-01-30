@@ -1,0 +1,21 @@
+bcgw_labels:
+  broadleaf:
+    bool : True
+  herb:
+    bool : False
+  conifer:
+    bool : False
+  water:
+    bool : False
+  shrub:
+    bool : False
+  river:
+    bool : True
+  exposed:
+    bool : False
+  cutbl:
+    bool : False
+  exposed:
+    bool : False
+  mixed:
+    bool : False
