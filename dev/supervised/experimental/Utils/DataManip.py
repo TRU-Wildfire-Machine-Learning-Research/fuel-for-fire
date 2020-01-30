@@ -6,6 +6,12 @@ from Utils.Misc import sys
 """
 ######    General use functions
 """
+def ravel(lines, samples, bands, arr):
+    return arr.reshape(int(lines) * int(samples), int(bands))
+
+def spatial(lines, samples, bands, arr):
+    return arr.reshape(int(lines), int(samples), int(bands))
+
 def create_batch_generator(X, y, batch_size=128, shuffle=False):
     X_copy = np.array(X)
     y_copy = np.array(y)
