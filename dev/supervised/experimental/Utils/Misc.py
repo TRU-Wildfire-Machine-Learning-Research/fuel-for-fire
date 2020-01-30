@@ -3,11 +3,15 @@ import os
 import sys
 import copy
 import math
+import yaml
 import struct
 import numpy as np
 import os.path as path
 import matplotlib.pyplot as plt
 
+def load_config():
+    cfg = yaml.load(open('dev/config.yaml', 'r'), Loader=yaml.BaseLoader)
+    return cfg
 
 def err(msg):
     print('Error: ' + msg)
