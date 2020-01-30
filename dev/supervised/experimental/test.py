@@ -8,11 +8,13 @@ if __name__ == "__main__":
 
     data = Data("data", "data_img", "data_bcgw")
 
-
-    print(data.Label['water'].Binary.shape)
+    data.Label['conifer'].showplot()
     # for label in data.Label.keys():
-    #     print(label)
-    #     #u_elements, count_elements = np.unique(data.Label[label].Binary, return_counts=True)
+    #     yb = data.Label[label].spatial()
+    #     yr = data.Label[label].spatial(binary=False)
 
-    #     print("Frequency of unique values of %s array:" % label)
-    #     print(np.asarray((u_elements, count_elements)))
+    #     plt.imshow(yb, cmap='gray')
+    #     plt.show()
+
+    #     plt.imshow(yr)
+    #     plt.show()
