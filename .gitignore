@@ -7,3 +7,4 @@ log
 *checkpoints*
 *mnist/
 20190926kamloops_data/
+*__pycache__
