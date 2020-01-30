@@ -1,28 +1,43 @@
 from Utils.Misc import *
+from Utils.DataManip import *
 
 class Label(object):
-    def __init__(self, name, bin):
+    def __init__(self, name, bin, cfg):
         self.name = name
-        self.label_false_value_dict = {
-            'water' : 128,
-            'shrub' : 0.0,
-            'mixed' : 0.0,
-            'conifer' : 0.0,
-            'herb' : 0.0,
-            'cutbl' : 0.0,
-            'exposed' : 0.0
-        }
-        self.label_true_value_dict = {
-            'river' : 1.0,
-            'broadleaf' : 1.0
-        }
-        self.samples, self.lines, self.bands, self.RawLabel = read_binary(bin)
-        self.__build_binary()
+        s,l,b,self.Data = read_binary(bin)
+        self.samples, self.lines, self.bands = int(s), int(l), int(b)
+        self.__build_binary(cfg)
 
-    def __build_binary(self):
-        # if the class name is in the false dict
-        if self.name in self.label_false_value_dict:
-            self.Binary = self.RawLabel != self.label_false_value_dict[self.name]
-        elif self.name in self.label_true_value_dict:
-            self.Binary = self.RawLabel == self.label_true_value_dict[self.name]
-    
+    def __build_binary(self, cfg):
+        classes = cfg['bcgw_labels']
+        if self.name in classes:
+            bstr = classes[self.name]['bool']
+            val =  classes[self.name]['val']
+
+            if bstr == 'True':
+                self.Binary = self.Data == float(val)
+            elif bstr == 'False':
+                self.Binary = self.Data != float(val)
+            else:
+                raise Exception('There was an error encoding binaries')
+
+    def ravel(self, binary=True):
+        if binary:
+            return self.Binary.reshape(self.lines * self.samples)
+        else:
+            return self.Data.reshape(self.lines *  self.samples)
+
+    def spatial(self, binary=True):
+        if binary:
+            return self.Binary.reshape(self.lines, self.samples)
+        else:
+            return self.Data.reshape(self.lines, self.samples)
+
+    def showplot(self, binary=True):
+        y = self.spatial(binary=binary)
+        if binary:
+            plt.imshow(y, cmap='gray')
+        else:
+            plt.imshow(y)
+        plt.tight_layout()
+        plt.show()
