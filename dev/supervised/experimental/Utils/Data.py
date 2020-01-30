@@ -1,10 +1,12 @@
 import os
 import math
+import yaml
 import struct
 import numpy as np
-from Utils.Image import *
 from Utils.Misc import *
 from Utils.Label import *
+from Utils.Image import *
+
 
 class Data(object):
     def __init__(self, src, images_path, labels_path):
@@ -30,33 +32,8 @@ class Data(object):
                 err("Do not recognize file ", bin)
 
     def __build_labels(self, bins):
-        """
-        Build the class labels based on data in
-        bcgw folder
-
-        -   self.rawlabel = the raw float value read
-            from the binary
-
-        -   self.label = the encoded 1 (True) or 0
-            (False) value based on analysis of the
-            lablel
-            *** This has a high likelihood of breaking
-                in general, only after analyzing the
-                data are we able to encode the value
-        """
         self.Label = dict()
-        classes = [
-            "broadleaf",
-            "herb",
-            "conifer",
-            "water",
-            "shrub",
-            "river",
-            "exposed",
-            "cutbl",
-            "exposed",
-            "mixed",
-                   ]
+        classes = load_config()['bcgw_labels']
 
         for _, bin in enumerate(bins):
             # add a dict item to the Label dict --
