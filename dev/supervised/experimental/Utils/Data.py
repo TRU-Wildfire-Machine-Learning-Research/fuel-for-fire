@@ -44,8 +44,7 @@ class Data(object):
                 in general, only after analyzing the
                 data are we able to encode the value
         """
-        self.label = {}
-        self.rawlabel = {}
+        self.Label = dict()
         classes = [
             "broadleaf",
             "herb",
@@ -60,9 +59,11 @@ class Data(object):
                    ]
 
         for _, bin in enumerate(bins):
-            for c in classes:
-                if c in bin.lower():
-                    self.label[c] = Label(c,bin)
+            print(bin)
+            self.Label.update({
+                c:Label(c, bin)
+                for c in classes if c in bin.lower()
+            })
 
     @staticmethod
     def __build_binaries(path):
