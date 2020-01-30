@@ -10,10 +10,9 @@ class Image(object):
         self.Data = data
 
     def ravel(self):
-        return self.Data.reshape(self.lines * self.samples, self.bands)
-
+        return ravel(self.lines, self.samples, self.bands, self.Data)
     def spatial(self):
-        return self.Data.reshape(self.lines, self.samples, self.bands)
+        return spatial(self.lines, self.samples, self.bands, self.Data)
 
     def rgb(self):
         res = np.zeros((self.lines, self.samples, 3))
