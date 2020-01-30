@@ -25,3 +25,4 @@ class Label(object):
             self.Binary = self.RawLabel != self.label_false_value_dict[self.name]
         elif self.name in self.label_true_value_dict:
             self.Binary = self.RawLabel == self.label_true_value_dict[self.name]
+    
