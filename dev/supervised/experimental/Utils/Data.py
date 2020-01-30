@@ -43,8 +43,7 @@ class Data(object):
                 for c in classes if c in bin.lower()
             })
 
-    @staticmethod
-    def __build_binaries(path):
+    def __build_binaries(self,path):
         try:
             for root, dirs, files in os.walk(path, topdown=False):
                 bin_files = [
