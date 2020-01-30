@@ -2,7 +2,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
 import matplotlib.pyplot as plt
-from Models import TFLinreg
+from Utils.Model import TFLinreg
 
 
 if __name__ == "__main__":
