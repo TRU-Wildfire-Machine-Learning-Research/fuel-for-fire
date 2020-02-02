@@ -104,7 +104,7 @@ class LayersMultiLayerPerceptron(object):
                                       activation=tf.tanh,
                                       name='hidden_layer2')
             self.logits = tf.layers.dense(inputs=self.h2,
-                                          units=10,
+                                          units=9,
                                           activation=None,
                                           name='output_layer')
             self.predictions = {
@@ -130,7 +130,7 @@ class LayersMultiLayerPerceptron(object):
             training_costs = []
 
             batch_generator = create_batch_generator(
-                X_train, y_train, batch_size=64
+                X_train, y_train, batch_size=256
             )
 
             for batch_X, batch_y in batch_generator:
