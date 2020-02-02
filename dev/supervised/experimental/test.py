@@ -7,7 +7,7 @@ from Utils.Data import Data
 if __name__ == "__main__":
 
     data = Data("data", "data_img", "data_bcgw")
-    plt.imshow(data.S2.Data)
+    plt.imshow(data.S2.rgb)
     plt.show()
 
 
