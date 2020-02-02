@@ -57,7 +57,7 @@ def read_hdr(hdr):
 
 # use numpy to read floating-point data, 4 byte / float, byte-order 0
 def read_float(fn):
-    print("+r", fn)
+    #print("+r", fn)
     return np.fromfile(fn, '<f4')
 
 
@@ -74,7 +74,7 @@ def read_binary(fn):
 
     # read header and print parameters
     samples, lines, bands = read_hdr(hdr)
-    print("\tsamples", samples, "lines", lines, "bands", bands)
+    #print("\tsamples", samples, "lines", lines, "bands", bands)
 
     data = read_float(fn)
     return samples, lines, bands, data
