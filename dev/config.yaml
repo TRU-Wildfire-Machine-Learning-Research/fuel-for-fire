@@ -20,9 +20,9 @@ bcgw_labels:
   exposed:
     bool : False
     val : 0.0
-  cutbl:
-    bool : False
-    val : 0.0
+  # cutbl:
+  #   bool : False
+  #   val : 0.0
   mixed:
     bool : False
     val : 0.0
