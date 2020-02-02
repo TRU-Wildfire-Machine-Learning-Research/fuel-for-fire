@@ -18,7 +18,6 @@ class Data(object):
         labels_path = os.path.join(self.src, '%s' % labels_path)
         img_bins = self.__build_binaries(images_path)
         lbl_bins = self.__build_binaries(labels_path)
-        print(lbl_bins)
         self.__build_images(img_bins)
         self.__build_labels(lbl_bins)
 
