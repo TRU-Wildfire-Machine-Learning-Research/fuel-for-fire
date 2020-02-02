@@ -34,10 +34,9 @@ class Label(object):
             return self.Data.reshape(self.lines, self.samples)
 
     def showplot(self, binary=True):
-        y = self.spatial(binary=binary)
         if binary:
-            plt.imshow(y, cmap='gray')
+            plt.imshow(self.spatial(binary=binary), cmap='gray')
         else:
-            plt.imshow(y)
+            plt.imshow(self.spatial(binary=binary))
         plt.tight_layout()
         plt.show()
