@@ -17,12 +17,12 @@ bcgw_labels:
   river:
     bool : True
     val : 1.0
-  exposed:
-    bool : False
-    val : 0.0
-  # cutbl:
+  # exposed:
   #   bool : False
   #   val : 0.0
-  mixed:
-    bool : False
-    val : 0.0
+  # # cutbl:
+  # #   bool : False
+  # #   val : 0.0
+  # mixed:
+  #   bool : False
+  #   val : 0.0
