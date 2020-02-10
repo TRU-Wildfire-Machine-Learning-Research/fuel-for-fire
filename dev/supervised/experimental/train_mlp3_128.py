@@ -6,20 +6,12 @@ tf.disable_v2_behavior()
 from Utils.Misc import *
 from Utils.Data import Data
 from Utils.DataTest import *
-from Utils.Model import LayersMultiLayerPerceptron2_50
+from Utils.Model import LayersMultiLayerPerceptron3_128
 from sklearn.model_selection import train_test_split
 
 if __name__ == "__main__":
 
     data = Data("data", "data_img", "data_bcgw")
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-    data.Label['conifer'].showplot()
-=======
-    plt.imshow(data.S2.rgb)
-    plt.show()
-=======
     X = data.S2.ravel()
     y = data.labels_onehot()
 
@@ -35,23 +27,23 @@ if __name__ == "__main__":
     print(X_train_centered.shape, y_train.shape)
     print(X_test_centered.shape, y_test.shape)
 
-    mlpmodel = LayersMultiLayerPerceptron2_50(X_test_centered.shape[1], 9, learning_rate=0.001)
+    mlpmodel = LayersMultiLayerPerceptron3_128(X_test_centered.shape[1], 9, learning_rate=0.003333)
 
     sess = tf.Session(graph=mlpmodel.g)
-    training_costs = LayersMultiLayerPerceptron2_50.train_mlp(sess,
+    training_costs = LayersMultiLayerPerceptron3_128.train_mlp(sess,
                                                     mlpmodel,
                                                     X_train_centered,
                                                     y_train,
-                                                    num_epochs=100)
+                                                    num_epochs=100,
+                                                    batch_size=128)
 
-    y_pred = LayersMultiLayerPerceptron2_50.predict_mlp(sess, mlpmodel, X_test_centered)
+    y_pred = LayersMultiLayerPerceptron3_128.predict_mlp(sess, mlpmodel, X_test_centered)
 
     print('Test Accuracy: %.2f%%' % (
         100*np.sum(y_pred == y_test) / y_test.shape[0]
     ))
     # plt.imshow(data.S2.rgb)
     # plt.show()
->>>>>>> b9f62ff83eaeef4de609db961de673dfaa631397
 
 
 
@@ -59,7 +51,6 @@ if __name__ == "__main__":
     working, keep for now
     """
     #data.Label['conifer'].showplot()
->>>>>>> 376351d262e8c6339e557797f18e673f8584f5e2
     # for label in data.Label.keys():
     #     yb = data.Label[label].spatial()
     #     yr = data.Label[label].spatial(binary=False)

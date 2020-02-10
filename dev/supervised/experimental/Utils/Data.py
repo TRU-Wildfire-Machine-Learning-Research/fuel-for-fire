@@ -37,14 +37,13 @@ class Data(object):
     def __build_labels(self, bins):
         self.Label = dict()
         cfg = load_config()
-        classes = cfg['bcgw_labels']
-
+        self.classes = sorted(cfg['bcgw_labels'])
         for _, bin in enumerate(bins):
             # add a dict item to the Label dict --
             # labelname : Label
             self.Label.update({
                 c:Label(c, bin, cfg)
-                for c in classes if c in bin.lower()
+                for c in self.classes if c in bin.lower()
             })
 
     def __build_binaries(self,path):
@@ -54,6 +53,37 @@ class Data(object):
                     os.path.join(path, '%s' % file)
                     for file in files if '.hdr' not in file
                 ]
-                return bin_files
+            return bin_files
         except:
             err("Error building headers and binaries for %s" % path)
+
+    def labels_onehot(self):
+        """
+            We are going to loop through each class label here
+            = an array of shape, 164410, with each index equal
+            to either 0 (False) or 1 (True).
+
+            Loop through all the labels, and the pixels in that
+            label. If the pixel is one, check if the pixel in
+            labels has already been set, if it has, set it to
+            10(pixel belonging to more than one class).
+            If it hasn't, set it to the class_idx.
+        """
+        labels = np.zeros((self.S2.samples * self.S2.lines), dtype=np.int32)
+        for class_idx, label in enumerate(self.Label.keys()):
+            for pixel_idx, pixel in enumerate(self.Label[label].Binary):
+                # if this pixel belongs to the class label
+                if pixel == 1:
+                    # if the pixel in labels has already been set,
+                    # we have a conflict pixel, set it to 10
+                    if labels[pixel_idx] == 0:
+                        labels[pixel_idx] = class_idx + 1
+                    else:
+                        # equal to some other class, set to 10
+                        labels[pixel_idx] = 9
+                elif pixel == 0:
+                    continue
+                else:
+                    err("problem with your binary label encodings")
+
+        return labels
