@@ -1,7 +1,7 @@
 import tensorflow.compat.v1 as tf
 import tensorflow.keras as keras
 import numpy as np
-
+from Utils.Helper import Helper
 tf.disable_v2_behavior()
 
 class TFLinreg(object):
@@ -189,7 +189,7 @@ class LayersMultiLayerPerceptron2_50(object):
         for epoch in range(num_epochs):
             training_costs = []
 
-            batch_generator = HelperFunction.create_batch_generator(
+            batch_generator = Helper.create_batch_generator(
                 X_train, y_train, batch_size=128
             )
 

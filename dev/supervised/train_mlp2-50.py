@@ -5,8 +5,8 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 from rasterbox.Rasterbox import Rasterbox as rb
 from Utils.targets import get_bcgw_targets
-from Utils.Model import LayersMultiLayerPerceptron
-from Utils.Model import HelperFunction
+from Models.Tensorflow import LayersMultiLayerPerceptron2_50
+from Utils.Helper import Helper
 from sklearn.model_selection import train_test_split
 
 if __name__ == "__main__":
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # split and normalize data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-    mean_vals, std_val = HelperFunction.mean_center_normalize(X_train)
+    mean_vals, std_val = Helper.mean_center_normalize(X_train)
 
     X_train_centered = (X_train - mean_vals) / std_val
     X_test_centered = (X_test - mean_vals) / std_val
@@ -35,10 +35,10 @@ if __name__ == "__main__":
     print()
 
 
-    mlpmodel = LayersMultiLayerPerceptron(X_test_centered.shape[1], len(targets), learning_rate=0.001)
+    mlpmodel = LayersMultiLayerPerceptron2_50(X_test_centered.shape[1], len(targets), learning_rate=0.001)
 
     sess = tf.Session(graph=mlpmodel.g)
-    training_costs = LayersMultiLayerPerceptron.train_mlp(sess,
+    training_costs = LayersMultiLayerPerceptron2_50.train_mlp(sess,
                                                     mlpmodel,
                                                     X_train_centered,
                                                     y_train,
