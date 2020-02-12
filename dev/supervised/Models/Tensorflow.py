@@ -155,18 +155,24 @@ class LayersMultiLayerPerceptron2_50(object):
             self.tf_x = tf.placeholder(dtype=tf.float32,
                                        shape=(None, n_features),
                                        name='tf_x')
+
             self.tf_y = tf.placeholder(dtype=tf.int32,
                                        shape=None, name='tf_y')
+
             self.y_onehot = tf.one_hot(indices=self.tf_y, depth=self.n_classes)
+
             self.h1 = tf.layers.dense(inputs=self.tf_x, units=50, activation=tf.tanh,
                                       name='hidden_layer1')
+
             self.h2 = tf.layers.dense(inputs=self.h1, units=50,
                                       activation=tf.tanh,
                                       name='hidden_layer2')
+
             self.logits = tf.layers.dense(inputs=self.h2,
                                           units=n_classes,
                                           activation=None,
                                           name='output_layer')
+
             self.predictions = {
                 'classes' : tf.argmax(self.logits, axis=1,
                                       name='predicted_classes'),
@@ -174,10 +180,10 @@ class LayersMultiLayerPerceptron2_50(object):
                                                name='softmax_tensor')
             }
 
-            self.build()
+            self.__build()
             self.init_op = tf.global_variables_initializer()
 
-    def build(self):
+    def __build(self):
         self.cost = tf.losses.softmax_cross_entropy(onehot_labels=self.y_onehot, logits=self.logits)
         self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
         self.train_op = self.optimizer.minimize(loss=self.cost)
