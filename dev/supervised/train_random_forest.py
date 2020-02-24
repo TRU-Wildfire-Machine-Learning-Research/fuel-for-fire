@@ -18,6 +18,7 @@ if __name__ == "__main__":
     # X_train_centered = (X_train - mean_vals) / std_val
     # X_test_centered = (X_test - mean_vals) / std_val
 
+    # n jobs uses all the available cores
     forest = RandomForestClassifier(n_estimators=20, random_state=2, max_features=10, n_jobs=-1)
 
     forest.fit(X_train, y_train)
