@@ -18,7 +18,7 @@ if __name__ == "__main__":
     y = data.Target[class_to_train].Binary
     print("X Shape:", X.shape)
     print("y Shape:", y.shape)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
 
     ## not necessary to center here
     # mean_vals, std_val = Helper.mean_center_normalize(X_train)
