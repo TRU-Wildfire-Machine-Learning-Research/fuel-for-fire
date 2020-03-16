@@ -25,6 +25,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
+from tensorboard_logger import configure, log_value
 '''
 partial setup instructions for ubuntu 18:
   python3 -m pip install pandas
@@ -38,7 +39,7 @@ data_frame = None  # global variable for data frame (need for parallelism)
 global lines
 global samples
 lines, samples = None, None  # read these from header file
-
+configure('run/run-1234', flush_secs=5)
 
 def get_data(fp):
     """Assumes the filepath provided contains both

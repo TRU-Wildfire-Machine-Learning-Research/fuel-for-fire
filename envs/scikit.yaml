@@ -26,3 +26,7 @@ dependencies:
       - pandas
       # Helper package to go along with the O'Reilly book
       - mglearn
+      # Raster Box, the object abstraction for the raser data
+      - rasterbox
+      # yaml
+      - yaml
