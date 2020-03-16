@@ -1,4 +1,12 @@
 images/
-data/
+data*
+*.png
 *DS_Store
 log
+*.vscode*
+*checkpoints*
+*mnist/
+20190926kamloops_data/
+*__pycache__/
+*.pyc
+*log
